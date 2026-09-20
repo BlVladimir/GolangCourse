@@ -5,53 +5,97 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"sync"
 )
 
 func main() {
-	const from int = 1
-	const to int = 10
-	const workers int = 10
+	const from, to int = 1, 10
+	const workersCount int = 10
 	const timeout int = 5
 
-	responce, error := http.Get("https://homeworksite.site/1/info.0.json")
+	filmIDs := make(chan int)
+	loadedFilms := make(chan LoadedFilm)
 
-	if error != nil {
-		fmt.Println("Error response:", error)
+	var wg sync.WaitGroup
+
+	go func() {
+		defer close(filmIDs)
+		for filmID := from; filmID <= to; filmID++ {
+			filmIDs <- filmID
+		}
+	}()
+
+	for workerNumber := 0; workerNumber < workersCount; workerNumber++ {
+		wg.Add(1)
+		go filmWorker(filmIDs, loadedFilms, &wg)
 	}
 
-	defer responce.Body.Close()
+	go func() {
+		wg.Wait()
+		close(loadedFilms)
+	}()
 
-	body, error := io.ReadAll(responce.Body)
-
-	if error != nil {
-		fmt.Println("Error reading:", error)
+	for loadedFilm := range loadedFilms {
+		if loadedFilm.Err == nil {
+			printFilmInfo(loadedFilm.FilmInfo)
+		} else {
+			fmt.Printf("%d - error: %s", loadedFilm.ID, loadedFilm.Err)
+		}
 	}
-
-	fmt.Println("Status:", responce.StatusCode)
-	printFilmInfo(body)
 }
 
-type MovieData struct {
+func getFilmData(filmID int) (FilmInfo, error) {
+	url := fmt.Sprintf("https://homeworksite.site/%d/info.0.json", filmID)
+
+	responce, err := http.Get(url)
+	if err != nil {
+		return FilmInfo{}, err
+	}
+	defer responce.Body.Close()
+
+	body, err := io.ReadAll(responce.Body)
+	if err != nil {
+		return FilmInfo{}, err
+	}
+
+	var filmData FilmInfo
+	err = json.Unmarshal(body, &filmData)
+	if err != nil {
+		return FilmInfo{}, err
+	}
+
+	return filmData, nil
+}
+
+func filmWorker(filmIDs <-chan int, loadedFilms chan<- LoadedFilm, wg *sync.WaitGroup) {
+	defer wg.Done()
+
+	for id := range filmIDs {
+		filmData, err := getFilmData(id)
+		film := LoadedFilm{ID: id, FilmInfo: filmData, Err: err}
+		loadedFilms <- film
+	}
+}
+
+type LoadedFilm struct {
+	ID       int
+	FilmInfo FilmInfo
+	Err      error
+}
+
+type FilmInfo struct {
 	ID       int    `json:"id"`
 	Title    string `json:"title"`
 	Year     int    `json:"year"`
 	Director string `json:"director"`
 }
 
-func printFilmInfo(infoBytes []byte) {
-	var movieData MovieData
-
-	error := json.Unmarshal(infoBytes, &movieData)
-	if error != nil {
-		fmt.Println("Error parcing JSON:", error)
-		return
-	}
-
+func printFilmInfo(filmInfo FilmInfo) {
 	fmt.Printf(
 		"%d - %s - %d - %s\n",
-		movieData.ID,
-		movieData.Title,
-		movieData.Year,
-		movieData.Director,
+		filmInfo.ID,
+		filmInfo.Title,
+		filmInfo.Year,
+		filmInfo.Director,
 	)
 }
