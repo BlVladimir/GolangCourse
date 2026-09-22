@@ -1,12 +1,15 @@
 package filmdatareader
 
 import (
+	"context"
+	"net/http"
 	"sync"
+	"time"
 
 	"github.com/BlVladimir/GolangCourse/internal/film_models"
 )
 
-func Run(from int, to int, workersCount int) <-chan film_models.LoadInfo {
+func Run(ctx context.Context, from int, to int, workersCount int, client *http.Client, timeout time.Duration) <-chan film_models.LoadInfo {
 	filmIDs := make(chan int)
 	loadedFilms := make(chan film_models.LoadInfo)
 
@@ -21,7 +24,7 @@ func Run(from int, to int, workersCount int) <-chan film_models.LoadInfo {
 
 	for workerNumber := 0; workerNumber < workersCount; workerNumber++ {
 		wg.Add(1)
-		go filmWorker(filmIDs, loadedFilms, &wg)
+		go worker(ctx, filmIDs, loadedFilms, client, timeout, &wg)
 	}
 
 	go func() {
