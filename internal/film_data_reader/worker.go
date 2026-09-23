@@ -2,6 +2,7 @@ package filmdatareader
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"sync"
 	"time"
@@ -14,6 +15,10 @@ func worker(ctx context.Context, filmIDs <-chan int, loadedFilms chan<- film_mod
 
 	for id := range filmIDs {
 		filmData, err := fetch(ctx, id, client, timeout)
+
+		if errors.Is(err, context.Canceled) {
+			return
+		}
 		film := film_models.LoadInfo{ID: id, FilmInfo: filmData, Err: err}
 		loadedFilms <- film
 	}
