@@ -9,7 +9,7 @@ import (
 	"github.com/BlVladimir/GolangCourse/internal/film_models"
 )
 
-func Run(ctx context.Context, from int, to int, workersCount int, client *http.Client, timeout time.Duration) <-chan film_models.FilmResult {
+func Run(ctx context.Context, from int, to int, workersCount int, client *http.Client, timeout time.Duration) film_models.LoadReport {
 	filmIDs := make(chan int)
 	loadedFilms := make(chan film_models.FilmResult)
 
@@ -32,5 +32,10 @@ func Run(ctx context.Context, from int, to int, workersCount int, client *http.C
 		close(loadedFilms)
 	}()
 
-	return loadedFilms
+	var filmResults []film_models.FilmResult
+	for filmResult := range loadedFilms {
+		filmResults = append(filmResults, filmResult)
+	}
+
+	return film_models.LoadReport{FilmResults: filmResults}
 }

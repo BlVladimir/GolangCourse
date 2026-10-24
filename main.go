@@ -45,7 +45,7 @@ func main() {
 	client := &http.Client{}
 
 	defer stop()
-	for loadedFilm := range filmdatareader.Run(ctx, *from, *to, *workersCount, client, *timeout) {
+	for _, loadedFilm := range filmdatareader.Run(ctx, *from, *to, *workersCount, client, *timeout).FilmResults {
 		fmt.Println(loadedFilm.String())
 	}
 }
