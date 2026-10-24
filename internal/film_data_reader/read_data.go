@@ -9,9 +9,9 @@ import (
 	"github.com/BlVladimir/GolangCourse/internal/film_models"
 )
 
-func Run(ctx context.Context, from int, to int, workersCount int, client *http.Client, timeout time.Duration) <-chan film_models.LoadInfo {
+func Run(ctx context.Context, from int, to int, workersCount int, client *http.Client, timeout time.Duration) <-chan film_models.FilmResult {
 	filmIDs := make(chan int)
-	loadedFilms := make(chan film_models.LoadInfo)
+	loadedFilms := make(chan film_models.FilmResult)
 
 	var wg sync.WaitGroup
 

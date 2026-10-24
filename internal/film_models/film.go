@@ -4,19 +4,20 @@ import (
 	"fmt"
 )
 
-type FilmInfo struct {
+// All information about single film.
+type Film struct {
 	ID       int    `json:"id"`
 	Title    string `json:"title"`
 	Year     int    `json:"year"`
 	Director string `json:"director"`
 }
 
-func (filmInfo FilmInfo) String() string {
+func (film Film) String() string {
 	return fmt.Sprintf(
 		"%d - %s - %d - %s\n",
-		filmInfo.ID,
-		filmInfo.Title,
-		filmInfo.Year,
-		filmInfo.Director,
+		film.ID,
+		film.Title,
+		film.Year,
+		film.Director,
 	)
 }

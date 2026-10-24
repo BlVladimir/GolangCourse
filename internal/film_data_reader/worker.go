@@ -10,7 +10,7 @@ import (
 	"github.com/BlVladimir/GolangCourse/internal/film_models"
 )
 
-func worker(ctx context.Context, filmIDs <-chan int, loadedFilms chan<- film_models.LoadInfo, client *http.Client, timeout time.Duration, wg *sync.WaitGroup) {
+func worker(ctx context.Context, filmIDs <-chan int, loadedFilms chan<- film_models.FilmResult, client *http.Client, timeout time.Duration, wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	for id := range filmIDs {
@@ -19,7 +19,7 @@ func worker(ctx context.Context, filmIDs <-chan int, loadedFilms chan<- film_mod
 		if errors.Is(err, context.Canceled) {
 			return
 		}
-		film := film_models.LoadInfo{ID: id, FilmInfo: filmData, Err: err}
+		film := film_models.FilmResult{ID: id, FilmInfo: filmData, Err: err}
 		loadedFilms <- film
 	}
 }
