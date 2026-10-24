@@ -1,4 +1,4 @@
-package filmdatareader
+package film_reader
 
 import (
 	"context"

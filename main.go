@@ -4,13 +4,12 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
-	filmdatareader "github.com/BlVladimir/GolangCourse/internal/film_data_reader"
+	"github.com/BlVladimir/GolangCourse/internal/film_service"
 )
 
 func main() {
@@ -35,39 +34,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	validationErr := validate(*from, *to, *workersCount, *timeout)
-	if validationErr != nil {
-		fmt.Println(validationErr)
-		os.Exit(1)
-	}
+	service := film_service.NewFilmService("https://homeworksite.site", *workersCount, *timeout)
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	client := &http.Client{}
 
 	defer stop()
-	for _, loadedFilm := range filmdatareader.Run(ctx, *from, *to, *workersCount, client, *timeout).FilmResults {
+	for _, loadedFilm := range service.LoadMovies(ctx, *from, *to).FilmResults {
 		fmt.Println(loadedFilm.String())
 	}
-}
-
-func validate(from int, to int, workers int, timeout time.Duration) error {
-
-	if from <= 0 {
-		return fmt.Errorf("--from must be > 0, got %d", from)
-	}
-	if to <= 0 {
-		return fmt.Errorf("--to must be > 0, got %d", to)
-	}
-	if from > to {
-		return fmt.Errorf("--from (%d) must not be greater than --to (%d)", from, to)
-	}
-
-	if workers <= 0 {
-		return fmt.Errorf("--workers must be > 0, got %d", workers)
-	}
-	if timeout <= 0 {
-		return fmt.Errorf("--timeout must be > 0, got %s", timeout)
-	}
-
-	return nil
 }
