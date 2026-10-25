@@ -37,9 +37,17 @@ func main() {
 	service := film_service.NewFilmService("https://homeworksite.site", *workersCount, *timeout)
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-
 	defer stop()
-	for _, loadedFilm := range service.LoadMovies(ctx, *from, *to).FilmResults {
+
+	filmReport, err := service.LoadMovies(ctx, *from, *to)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "error:", err)
+		os.Exit(1)
+	}
+
+	for _, loadedFilm := range filmReport.FilmResults {
 		fmt.Println(loadedFilm.String())
 	}
+
+	fmt.Println(service.GetLastMovie(ctx))
 }

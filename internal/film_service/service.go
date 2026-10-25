@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/BlVladimir/GolangCourse/internal/film_models"
@@ -18,13 +19,44 @@ type FilmService struct {
 	timeout      time.Duration
 }
 
-func (service *FilmService) LoadMovies(ctx context.Context, from int, to int) film_models.LoadReport {
+func (service *FilmService) LoadMovies(ctx context.Context, from int, to int) (film_models.LoadReport, error) {
 	requestValidationErr := requestValidate(from, to)
 	if requestValidationErr != nil {
-		fmt.Println(requestValidationErr)
-		os.Exit(1)
+		return film_models.LoadReport{}, requestValidationErr
 	}
-	return film_reader.Run(ctx, from, to, service.workersCount, service.client, service.timeout)
+
+	filmIDs := make(chan int)
+	loadedFilms := make(chan film_models.FilmResult)
+
+	var wg sync.WaitGroup
+
+	go func() {
+		defer close(filmIDs)
+		for filmID := from; filmID <= to; filmID++ {
+			filmIDs <- filmID
+		}
+	}()
+
+	for workerNumber := 0; workerNumber < service.workersCount; workerNumber++ {
+		wg.Add(1)
+		go film_reader.ReadFilm(ctx, service.baseURL, filmIDs, loadedFilms, service.client, service.timeout, &wg)
+	}
+
+	go func() {
+		wg.Wait()
+		close(loadedFilms)
+	}()
+
+	var filmResults []film_models.FilmResult
+	for filmResult := range loadedFilms {
+		filmResults = append(filmResults, filmResult)
+	}
+
+	return film_models.LoadReport{FilmResults: filmResults}, nil
+}
+
+func (service *FilmService) GetLastMovie(ctx context.Context) (film_models.Film, error) {
+	return film_reader.GetLastFilm(ctx, service.baseURL, service.client, service.timeout)
 }
 
 func NewFilmService(baseURL string, workersCount int, timeout time.Duration) *FilmService {

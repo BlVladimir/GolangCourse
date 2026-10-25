@@ -10,11 +10,11 @@ import (
 	"github.com/BlVladimir/GolangCourse/internal/film_models"
 )
 
-func worker(ctx context.Context, filmIDs <-chan int, loadedFilms chan<- film_models.FilmResult, client *http.Client, timeout time.Duration, wg *sync.WaitGroup) {
+func ReadFilm(ctx context.Context, baseURL string, filmIDs <-chan int, loadedFilms chan<- film_models.FilmResult, client *http.Client, timeout time.Duration, wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	for id := range filmIDs {
-		filmData, err := fetch(ctx, id, client, timeout)
+		filmData, err := fetch(ctx, baseURL, id, client, timeout)
 
 		if errors.Is(err, context.Canceled) {
 			return

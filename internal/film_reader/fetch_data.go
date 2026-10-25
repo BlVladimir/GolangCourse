@@ -3,6 +3,7 @@ package film_reader
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -10,12 +11,14 @@ import (
 	"github.com/BlVladimir/GolangCourse/internal/film_models"
 )
 
-func fetch(ctx context.Context, filmID int, client *http.Client, timeout time.Duration) (film_models.Film, error) {
+var errNotFound = errors.New("film not found")
+
+func fetch(ctx context.Context, baseURL string, filmID int, client *http.Client, timeout time.Duration) (film_models.Film, error) {
 
 	requestCtx, cancle := context.WithTimeout(ctx, timeout)
 	defer cancle()
 
-	url := fmt.Sprintf("https://homeworksite.site/%d/info.0.json", filmID)
+	url := fmt.Sprintf("%s/%d/info.0.json", baseURL, filmID)
 	request, err := http.NewRequestWithContext(requestCtx, http.MethodGet, url, nil)
 	if err != nil {
 		return film_models.Film{}, err
@@ -27,7 +30,9 @@ func fetch(ctx context.Context, filmID int, client *http.Client, timeout time.Du
 	}
 	defer response.Body.Close()
 
-	if response.StatusCode != http.StatusOK {
+	if response.StatusCode == http.StatusNotFound {
+		return film_models.Film{}, errNotFound
+	} else if response.StatusCode != http.StatusOK {
 		return film_models.Film{}, fmt.Errorf("status %d", response.StatusCode)
 	}
 
