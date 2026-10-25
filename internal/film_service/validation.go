@@ -2,19 +2,7 @@ package film_service
 
 import (
 	"fmt"
-	"time"
 )
-
-func configValidate(workers int, timeout time.Duration) error {
-	if workers <= 0 {
-		return fmt.Errorf("--workers must be > 0, got %d", workers)
-	}
-	if timeout <= 0 {
-		return fmt.Errorf("--timeout must be > 0, got %s", timeout)
-	}
-
-	return nil
-}
 
 func requestValidate(from int, to int) error {
 

@@ -2,9 +2,7 @@ package film_service
 
 import (
 	"context"
-	"fmt"
 	"net/http"
-	"os"
 	"sync"
 	"time"
 
@@ -59,19 +57,13 @@ func (service *FilmService) GetLastMovie(ctx context.Context) (film_models.Film,
 	return film_reader.GetLastFilm(ctx, service.baseURL, service.client, service.timeout)
 }
 
-func NewFilmService(baseURL string, workersCount int, timeout time.Duration) *FilmService {
-	configValidationErr := configValidate(workersCount, timeout)
-	if configValidationErr != nil {
-		fmt.Println(configValidationErr)
-		os.Exit(1)
-	}
-
+func NewFilmService(config film_models.Config) *FilmService {
 	client := &http.Client{}
 
 	return &FilmService{
 		client:       client,
-		baseURL:      baseURL,
-		workersCount: workersCount,
-		timeout:      timeout,
+		baseURL:      config.MovieBaseURL,
+		workersCount: config.Workers,
+		timeout:      config.Timeout,
 	}
 }

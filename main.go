@@ -4,19 +4,18 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
+	"github.com/BlVladimir/GolangCourse/internal/film_models"
 	"github.com/BlVladimir/GolangCourse/internal/film_service"
 )
 
 func main() {
 	from := flag.Int("from", 0, "id first film (required arg)")
 	to := flag.Int("to", 0, "id last film (required arg)")
-	workersCount := flag.Int("workers", 10, "count of workers")
-	timeout := flag.Duration("timeout", 5*time.Second, "timeout of one request")
 
 	flag.Parse()
 
@@ -34,7 +33,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	service := film_service.NewFilmService("https://homeworksite.site", *workersCount, *timeout)
+	cnf, err := film_models.Load()
+	if err != nil {
+		log.Fatalf("config: %v", err)
+	}
+
+	service := film_service.NewFilmService(cnf)
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
