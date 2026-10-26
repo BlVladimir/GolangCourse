@@ -1,4 +1,4 @@
-package film_models
+package model
 
 import (
 	"fmt"

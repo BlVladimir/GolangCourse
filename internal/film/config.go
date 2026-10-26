@@ -1,4 +1,4 @@
-package film_models
+package film
 
 import (
 	"fmt"
@@ -83,10 +83,10 @@ func envDuration(key string, def time.Duration) (time.Duration, error) {
 
 func configValidate(workers int, timeout time.Duration) error {
 	if workers <= 0 {
-		return fmt.Errorf("--workers must be > 0, got %d", workers)
+		return fmt.Errorf("WORKERS must be > 0, got %d", workers)
 	}
 	if timeout <= 0 {
-		return fmt.Errorf("--timeout must be > 0, got %s", timeout)
+		return fmt.Errorf("TIMEOUT must be > 0, got %s", timeout)
 	}
 
 	return nil

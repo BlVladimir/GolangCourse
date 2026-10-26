@@ -2,56 +2,52 @@ package main
 
 import (
 	"context"
-	"flag"
-	"fmt"
+	"errors"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
-	"github.com/BlVladimir/GolangCourse/internal/film_models"
-	"github.com/BlVladimir/GolangCourse/internal/film_service"
+	"github.com/BlVladimir/GolangCourse/internal/film"
+	"github.com/BlVladimir/GolangCourse/internal/http_api"
 )
 
 func main() {
-	from := flag.Int("from", 0, "id first film (required arg)")
-	to := flag.Int("to", 0, "id last film (required arg)")
-
-	flag.Parse()
-
-	set := map[string]bool{}
-	flag.Visit(func(f *flag.Flag) { set[f.Name] = true })
-
-	if !set["from"] {
-		fmt.Fprintln(os.Stderr, "error: --from is required")
-		flag.Usage()
-		os.Exit(1)
-	}
-	if !set["to"] {
-		fmt.Fprintln(os.Stderr, "error: --to is required")
-		flag.Usage()
-		os.Exit(1)
-	}
-
-	cnf, err := film_models.Load()
+	cfg, err := film.Load()
 	if err != nil {
 		log.Fatalf("config: %v", err)
 	}
 
-	service := film_service.NewFilmService(cnf)
+	svc := film.NewFilmService(cfg)
+
+	router := http_api.NewRouter(http_api.New(svc))
+
+	srv := &http.Server{
+		Addr:              cfg.HTTPAddr,
+		Handler:           router,
+		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       10 * time.Second,
+		WriteTimeout:      60 * time.Second, // GetLastMovie: ~2·log(N) запросов
+		IdleTimeout:       60 * time.Second,
+	}
+
+	go func() {
+		log.Printf("HTTP listening on %s", cfg.HTTPAddr)
+		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.Fatalf("http: %v", err)
+		}
+	}()
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
+	<-ctx.Done()
 
-	filmReport, err := service.LoadMovies(ctx, *from, *to)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "error:", err)
-		os.Exit(1)
+	log.Println("shutting down...")
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if err := srv.Shutdown(shutdownCtx); err != nil {
+		log.Printf("shutdown: %v", err)
 	}
-
-	for _, loadedFilm := range filmReport.FilmResults {
-		fmt.Println(loadedFilm.String())
-	}
-
-	fmt.Println(service.GetLastMovie(ctx))
 }
