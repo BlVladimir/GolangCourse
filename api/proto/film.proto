@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package movie;
+
+option go_package = "github.com/BlVladimir/GolangCourse/api/proto;moviepb";
+
+// MovieService serves film data from the external stand.
+service MovieService {
+  // LoadMovies returns movies with ids in [from; to].
+  // Partial per-film failures are reported in the `errors` field;
+  // the call itself returns OK when the range was processed.
+  rpc LoadMovies(LoadMoviesRequest) returns (LoadMoviesResponse);
+
+  // GetLastMovie returns the film with the maximum existing id on the stand.
+  rpc GetLastMovie(GetLastMovieRequest) returns (Movie);
+}
+
+message LoadMoviesRequest {
+  int32 from = 1;
+  int32 to   = 2;
+}
+
+message LoadMoviesResponse {
+  repeated Movie     movies = 1;
+  repeated FilmError errors = 2;
+}
+
+// FilmError describes a per-film failure inside a successful LoadMovies call.
+message FilmError {
+  int32  id     = 1;
+  string reason = 2;
+}
+
+message GetLastMovieRequest {}
+
+message Movie {
+  int32  id       = 1;
+  string title    = 2;
+  int32  year     = 3;
+  string director = 4;
+}
