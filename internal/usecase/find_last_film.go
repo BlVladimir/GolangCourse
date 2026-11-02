@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/BlVladimir/GolangCourse/internal/domain"
 )
@@ -21,6 +22,9 @@ func findLastFilm(ctx context.Context, provider FilmProvider) (domain.Film, erro
 		} else {
 			lowID = midID + 1
 		}
+	}
+	if lowID == 1 {
+		return domain.Film{}, fmt.Errorf("stand has no films: %w", domain.ErrUpstream)
 	}
 	return provider.GetMovie(ctx, lowID-1)
 }

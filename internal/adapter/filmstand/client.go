@@ -18,8 +18,8 @@ type Client struct {
 }
 
 func (client *Client) GetMovie(ctx context.Context, id int) (domain.Film, error) {
-	requestCtx, cancle := context.WithTimeout(ctx, client.timeout)
-	defer cancle()
+	requestCtx, cancel := context.WithTimeout(ctx, client.timeout)
+	defer cancel()
 
 	url := fmt.Sprintf("%s/%d/info.0.json", client.baseURL, id)
 	request, err := http.NewRequestWithContext(requestCtx, http.MethodGet, url, nil)
