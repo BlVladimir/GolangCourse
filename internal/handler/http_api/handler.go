@@ -6,20 +6,21 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/BlVladimir/GolangCourse/internal/model"
+	"github.com/BlVladimir/GolangCourse/internal/domain"
+	"github.com/BlVladimir/GolangCourse/internal/usecase"
 )
 
 type FilmService interface {
-	LoadMovies(ctx context.Context, from, to int) (model.LoadReport, error)
-	GetLastMovie(ctx context.Context) (model.Film, error)
+	LoadMovies(ctx context.Context, from, to int) (usecase.LoadReport, error)
+	GetLastMovie(ctx context.Context) (domain.Film, error)
 }
 
 type Handler struct {
 	svc FilmService
 }
 
-func New(svc FilmService) *Handler {
-	return &Handler{svc: svc}
+func New(filmServise FilmService) *Handler {
+	return &Handler{svc: filmServise}
 }
 
 // LoadMovies godoc

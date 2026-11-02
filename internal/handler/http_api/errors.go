@@ -7,7 +7,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/BlVladimir/GolangCourse/internal/film"
+	"github.com/BlVladimir/GolangCourse/internal/domain"
 )
 
 const statusClientClosedRequest = 499
@@ -26,11 +26,11 @@ func writeError(w http.ResponseWriter, status int, msg string) {
 
 func mapError(err error) (int, string) {
 	switch {
-	case errors.Is(err, film.ErrInvalidRange):
+	case errors.Is(err, domain.ErrInvalidRange):
 		return http.StatusBadRequest, err.Error()
-	case errors.Is(err, film.ErrNotFound):
+	case errors.Is(err, domain.ErrNotFound):
 		return http.StatusNotFound, err.Error()
-	case errors.Is(err, film.ErrUpstream):
+	case errors.Is(err, domain.ErrUpstream):
 		return http.StatusBadGateway, err.Error()
 	case errors.Is(err, context.Canceled):
 		return statusClientClosedRequest, "client closed request"

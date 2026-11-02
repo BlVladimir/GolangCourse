@@ -1,6 +1,9 @@
 package http_api
 
-import "github.com/BlVladimir/GolangCourse/internal/model"
+import (
+	"github.com/BlVladimir/GolangCourse/internal/domain"
+	"github.com/BlVladimir/GolangCourse/internal/usecase"
+)
 
 type FilmError struct {
 	ID     int    `json:"id"     example:"5"`
@@ -8,19 +11,20 @@ type FilmError struct {
 }
 
 type LoadMoviesResponse struct {
-	Movies []model.Film `json:"movies"`
-	Errors []FilmError  `json:"errors"`
+	Movies []domain.Film `json:"movies"`
+	Errors []FilmError   `json:"errors"`
 }
 
 type ErrorResponse struct {
 	Error string `json:"error" example:"invalid range"`
 }
 
-func toLoadMoviesResponse(report model.LoadReport) LoadMoviesResponse {
+func toLoadMoviesResponse(report usecase.LoadReport) LoadMoviesResponse {
 	response := LoadMoviesResponse{
-		Movies: make([]model.Film, 0, len(report.FilmResults)),
+		Movies: make([]domain.Film, 0, len(report.FilmResults)),
 		Errors: make([]FilmError, 0),
 	}
+
 	for _, r := range report.FilmResults {
 		if r.Err != nil {
 			response.Errors = append(response.Errors, FilmError{ID: r.ID, Reason: r.Err.Error()})
@@ -28,5 +32,6 @@ func toLoadMoviesResponse(report model.LoadReport) LoadMoviesResponse {
 		}
 		response.Movies = append(response.Movies, r.FilmInfo)
 	}
+
 	return response
 }

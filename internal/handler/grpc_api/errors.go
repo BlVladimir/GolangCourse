@@ -5,18 +5,18 @@ import (
 	"errors"
 	"log"
 
-	"github.com/BlVladimir/GolangCourse/internal/film"
+	"github.com/BlVladimir/GolangCourse/internal/domain"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
 func mapError(err error) error {
 	switch {
-	case errors.Is(err, film.ErrInvalidRange):
+	case errors.Is(err, domain.ErrInvalidRange):
 		return status.Error(codes.InvalidArgument, err.Error())
-	case errors.Is(err, film.ErrNotFound):
+	case errors.Is(err, domain.ErrNotFound):
 		return status.Error(codes.NotFound, err.Error())
-	case errors.Is(err, film.ErrUpstream):
+	case errors.Is(err, domain.ErrUpstream):
 		return status.Error(codes.Unavailable, err.Error())
 	case errors.Is(err, context.Canceled):
 		return status.Error(codes.Canceled, "client closed request")

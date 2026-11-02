@@ -8,6 +8,7 @@ import (
 	moviepb "github.com/BlVladimir/GolangCourse/api/proto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/reflection"
 	"google.golang.org/grpc/status"
 )
 
@@ -19,6 +20,7 @@ func NewGRPCServer(svc FilmService) *grpc.Server {
 		),
 	)
 	moviepb.RegisterMovieServiceServer(srv, New(svc))
+	reflection.Register(srv)
 	return srv
 }
 

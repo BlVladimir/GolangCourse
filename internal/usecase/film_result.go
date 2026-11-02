@@ -1,13 +1,15 @@
-package model
+package usecase
 
 import (
 	"fmt"
+
+	"github.com/BlVladimir/GolangCourse/internal/domain"
 )
 
 // Result of loading single film.
 type FilmResult struct {
 	ID       int
-	FilmInfo Film
+	FilmInfo domain.Film
 	Err      error
 }
 

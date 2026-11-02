@@ -4,12 +4,13 @@ import (
 	"context"
 
 	moviepb "github.com/BlVladimir/GolangCourse/api/proto"
-	"github.com/BlVladimir/GolangCourse/internal/model"
+	"github.com/BlVladimir/GolangCourse/internal/domain"
+	"github.com/BlVladimir/GolangCourse/internal/usecase"
 )
 
 type FilmService interface {
-	LoadMovies(ctx context.Context, from, to int) (model.LoadReport, error)
-	GetLastMovie(ctx context.Context) (model.Film, error)
+	LoadMovies(ctx context.Context, from, to int) (usecase.LoadReport, error)
+	GetLastMovie(ctx context.Context) (domain.Film, error)
 }
 
 type Server struct {

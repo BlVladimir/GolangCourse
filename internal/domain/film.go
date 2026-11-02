@@ -1,4 +1,4 @@
-package model
+package domain
 
 import (
 	"fmt"
@@ -6,10 +6,10 @@ import (
 
 // All information about single film.
 type Film struct {
-	ID       int    `json:"id"`
-	Title    string `json:"title"`
-	Year     int    `json:"year"`
-	Director string `json:"director"`
+	ID       int
+	Title    string
+	Year     int
+	Director string
 }
 
 func (film Film) String() string {
