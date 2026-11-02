@@ -22,7 +22,7 @@ func New(svc FilmService) *Server {
 	return &Server{svc: svc}
 }
 
-func (s *Server) LoadMovies(ctx context.Context, req *moviepb.LoadMoviesRequest) (*moviepb.LoadMoviesResponse, error) {
+func (s *Server) LoadMovies(ctx context.Context, req *moviepb.LoadMoviesRequest) (*moviepb.LoadFilmsResponse, error) {
 	from := int(req.GetFrom())
 	to := int(req.GetTo())
 
@@ -34,7 +34,7 @@ func (s *Server) LoadMovies(ctx context.Context, req *moviepb.LoadMoviesRequest)
 	return toProtoResponse(report), nil
 }
 
-func (s *Server) GetLastMovie(ctx context.Context, _ *moviepb.GetLastMovieRequest) (*moviepb.Movie, error) {
+func (s *Server) GetLastMovie(ctx context.Context, _ *moviepb.GetLastMovieRequest) (*moviepb.Film, error) {
 	filmData, err := s.svc.GetLastMovie(ctx)
 	if err != nil {
 		return nil, mapError(err)

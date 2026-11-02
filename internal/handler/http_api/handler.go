@@ -59,7 +59,7 @@ func (h *Handler) LoadMovies(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, http.StatusOK, toLoadMoviesResponse(report))
+	writeJSON(w, http.StatusOK, toLoadFilmsResponse(report))
 }
 
 // GetLastMovie godoc

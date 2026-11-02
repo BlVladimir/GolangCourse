@@ -8,6 +8,7 @@ package moviepb
 
 import (
 	context "context"
+
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -32,9 +33,9 @@ type MovieServiceClient interface {
 	// LoadMovies returns movies with ids in [from; to].
 	// Partial per-film failures are reported in the `errors` field;
 	// the call itself returns OK when the range was processed.
-	LoadMovies(ctx context.Context, in *LoadMoviesRequest, opts ...grpc.CallOption) (*LoadMoviesResponse, error)
+	LoadMovies(ctx context.Context, in *LoadMoviesRequest, opts ...grpc.CallOption) (*LoadFilmsResponse, error)
 	// GetLastMovie returns the film with the maximum existing id on the stand.
-	GetLastMovie(ctx context.Context, in *GetLastMovieRequest, opts ...grpc.CallOption) (*Movie, error)
+	GetLastMovie(ctx context.Context, in *GetLastMovieRequest, opts ...grpc.CallOption) (*Film, error)
 }
 
 type movieServiceClient struct {
@@ -45,9 +46,9 @@ func NewMovieServiceClient(cc grpc.ClientConnInterface) MovieServiceClient {
 	return &movieServiceClient{cc}
 }
 
-func (c *movieServiceClient) LoadMovies(ctx context.Context, in *LoadMoviesRequest, opts ...grpc.CallOption) (*LoadMoviesResponse, error) {
+func (c *movieServiceClient) LoadMovies(ctx context.Context, in *LoadMoviesRequest, opts ...grpc.CallOption) (*LoadFilmsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(LoadMoviesResponse)
+	out := new(LoadFilmsResponse)
 	err := c.cc.Invoke(ctx, MovieService_LoadMovies_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -55,9 +56,9 @@ func (c *movieServiceClient) LoadMovies(ctx context.Context, in *LoadMoviesReque
 	return out, nil
 }
 
-func (c *movieServiceClient) GetLastMovie(ctx context.Context, in *GetLastMovieRequest, opts ...grpc.CallOption) (*Movie, error) {
+func (c *movieServiceClient) GetLastMovie(ctx context.Context, in *GetLastMovieRequest, opts ...grpc.CallOption) (*Film, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(Movie)
+	out := new(Film)
 	err := c.cc.Invoke(ctx, MovieService_GetLastMovie_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -74,9 +75,9 @@ type MovieServiceServer interface {
 	// LoadMovies returns movies with ids in [from; to].
 	// Partial per-film failures are reported in the `errors` field;
 	// the call itself returns OK when the range was processed.
-	LoadMovies(context.Context, *LoadMoviesRequest) (*LoadMoviesResponse, error)
+	LoadMovies(context.Context, *LoadMoviesRequest) (*LoadFilmsResponse, error)
 	// GetLastMovie returns the film with the maximum existing id on the stand.
-	GetLastMovie(context.Context, *GetLastMovieRequest) (*Movie, error)
+	GetLastMovie(context.Context, *GetLastMovieRequest) (*Film, error)
 	mustEmbedUnimplementedMovieServiceServer()
 }
 
@@ -87,10 +88,10 @@ type MovieServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedMovieServiceServer struct{}
 
-func (UnimplementedMovieServiceServer) LoadMovies(context.Context, *LoadMoviesRequest) (*LoadMoviesResponse, error) {
+func (UnimplementedMovieServiceServer) LoadMovies(context.Context, *LoadMoviesRequest) (*LoadFilmsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method LoadMovies not implemented")
 }
-func (UnimplementedMovieServiceServer) GetLastMovie(context.Context, *GetLastMovieRequest) (*Movie, error) {
+func (UnimplementedMovieServiceServer) GetLastMovie(context.Context, *GetLastMovieRequest) (*Film, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetLastMovie not implemented")
 }
 func (UnimplementedMovieServiceServer) mustEmbedUnimplementedMovieServiceServer() {}

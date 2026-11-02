@@ -10,7 +10,7 @@ type FilmError struct {
 	Reason string `json:"reason" example:"status 404"`
 }
 
-type LoadMoviesResponse struct {
+type LoadFilmsResponse struct {
 	Movies []domain.Film `json:"movies"`
 	Errors []FilmError   `json:"errors"`
 }
@@ -19,8 +19,8 @@ type ErrorResponse struct {
 	Error string `json:"error" example:"invalid range"`
 }
 
-func toLoadMoviesResponse(report usecase.LoadReport) LoadMoviesResponse {
-	response := LoadMoviesResponse{
+func toLoadFilmsResponse(report usecase.LoadReport) LoadFilmsResponse {
+	response := LoadFilmsResponse{
 		Movies: make([]domain.Film, 0, len(report.FilmResults)),
 		Errors: make([]FilmError, 0),
 	}
