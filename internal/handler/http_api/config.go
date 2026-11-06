@@ -10,7 +10,7 @@ const defaultHTTPAddr = ":8080"
 
 func LoadHTTPConfig() (Config, error) {
 	cnf := Config{
-		HTTPAddr: envString("GRPC_ADDR", defaultHTTPAddr),
+		HTTPAddr: envString("HTTP_ADDR", defaultHTTPAddr),
 	}
 
 	return cnf, nil
