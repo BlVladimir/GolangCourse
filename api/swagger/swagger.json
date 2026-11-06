@@ -1,0 +1,163 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "Movie loader service backed by homeworksite.site.",
+        "title": "Movie API",
+        "contact": {},
+        "version": "1.0"
+    },
+    "host": "localhost:8080",
+    "basePath": "/",
+    "paths": {
+        "/last-movie": {
+            "get": {
+                "description": "Finds the film with the maximum id that exists on the stand.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "movies"
+                ],
+                "summary": "Get the last available movie",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.Film"
+                        }
+                    },
+                    "404": {
+                        "description": "No films on the stand",
+                        "schema": {
+                            "$ref": "#/definitions/http_api.ErrorResponse"
+                        }
+                    },
+                    "502": {
+                        "description": "Upstream unavailable",
+                        "schema": {
+                            "$ref": "#/definitions/http_api.ErrorResponse"
+                        }
+                    },
+                    "504": {
+                        "description": "Upstream timeout",
+                        "schema": {
+                            "$ref": "#/definitions/http_api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/load-movies": {
+            "get": {
+                "description": "Downloads movies with ids in [from; to] from the stand.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "movies"
+                ],
+                "summary": "Load movies in a range",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "First movie id",
+                        "name": "from",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Last movie id",
+                        "name": "to",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/http_api.LoadMoviesResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid or missing from/to",
+                        "schema": {
+                            "$ref": "#/definitions/http_api.ErrorResponse"
+                        }
+                    },
+                    "502": {
+                        "description": "Upstream unavailable",
+                        "schema": {
+                            "$ref": "#/definitions/http_api.ErrorResponse"
+                        }
+                    },
+                    "504": {
+                        "description": "Upstream timeout",
+                        "schema": {
+                            "$ref": "#/definitions/http_api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "http_api.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string",
+                    "example": "invalid range"
+                }
+            }
+        },
+        "http_api.FilmError": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer",
+                    "example": 5
+                },
+                "reason": {
+                    "type": "string",
+                    "example": "status 404"
+                }
+            }
+        },
+        "http_api.LoadMoviesResponse": {
+            "type": "object",
+            "properties": {
+                "errors": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/http_api.FilmError"
+                    }
+                },
+                "movies": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Film"
+                    }
+                }
+            }
+        },
+        "model.Film": {
+            "type": "object",
+            "properties": {
+                "director": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "year": {
+                    "type": "integer"
+                }
+            }
+        }
+    }
+}

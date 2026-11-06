@@ -1,0 +1,108 @@
+basePath: /
+definitions:
+  http_api.ErrorResponse:
+    properties:
+      error:
+        example: invalid range
+        type: string
+    type: object
+  http_api.FilmError:
+    properties:
+      id:
+        example: 5
+        type: integer
+      reason:
+        example: status 404
+        type: string
+    type: object
+  http_api.LoadMoviesResponse:
+    properties:
+      errors:
+        items:
+          $ref: '#/definitions/http_api.FilmError'
+        type: array
+      movies:
+        items:
+          $ref: '#/definitions/model.Film'
+        type: array
+    type: object
+  model.Film:
+    properties:
+      director:
+        type: string
+      id:
+        type: integer
+      title:
+        type: string
+      year:
+        type: integer
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: Movie loader service backed by homeworksite.site.
+  title: Movie API
+  version: "1.0"
+paths:
+  /last-movie:
+    get:
+      description: Finds the film with the maximum id that exists on the stand.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Film'
+        "404":
+          description: No films on the stand
+          schema:
+            $ref: '#/definitions/http_api.ErrorResponse'
+        "502":
+          description: Upstream unavailable
+          schema:
+            $ref: '#/definitions/http_api.ErrorResponse'
+        "504":
+          description: Upstream timeout
+          schema:
+            $ref: '#/definitions/http_api.ErrorResponse'
+      summary: Get the last available movie
+      tags:
+      - movies
+  /load-movies:
+    get:
+      description: Downloads movies with ids in [from; to] from the stand.
+      parameters:
+      - description: First movie id
+        in: query
+        name: from
+        required: true
+        type: integer
+      - description: Last movie id
+        in: query
+        name: to
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/http_api.LoadMoviesResponse'
+        "400":
+          description: Invalid or missing from/to
+          schema:
+            $ref: '#/definitions/http_api.ErrorResponse'
+        "502":
+          description: Upstream unavailable
+          schema:
+            $ref: '#/definitions/http_api.ErrorResponse'
+        "504":
+          description: Upstream timeout
+          schema:
+            $ref: '#/definitions/http_api.ErrorResponse'
+      summary: Load movies in a range
+      tags:
+      - movies
+swagger: "2.0"
