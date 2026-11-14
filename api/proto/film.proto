@@ -4,31 +4,23 @@ package movie;
 
 option go_package = "github.com/BlVladimir/GolangCourse/api/proto;moviepb";
 
-// MovieService serves film data from the external stand.
+// MovieService serves film data from the local database.
 service MovieService {
   // LoadMovies returns movies with ids in [from; to].
-  // Partial per-film failures are reported in the `errors` field;
-  // the call itself returns OK when the range was processed.
+  // All ids in a valid range are guaranteed to exist in the DB
+  // (populated at startup by Sync); missing rows would indicate
+  // a broken sync and are reported as an error.
   rpc LoadMovies(LoadMoviesRequest) returns (LoadMoviesResponse);
 
-  // GetLastMovie returns the film with the maximum existing id on the stand.
+  // GetLastMovie returns the film with the maximum id stored in the DB.
   rpc GetLastMovie(GetLastMovieRequest) returns (Movie);
 }
 
 message LoadMoviesRequest {
+  // from is the first movie id. Must be > 0 and <= to.
   int32 from = 1;
-  int32 to   = 2;
-}
-
-message LoadMoviesResponse {
-  repeated Movie     movies = 1;
-  repeated FilmError errors = 2;
-}
-
-// FilmError describes a per-film failure inside a successful LoadMovies call.
-message FilmError {
-  int32  id     = 1;
-  string reason = 2;
+  // to is the last movie id. Must be >= from.
+  int32 to = 2;
 }
 
 message GetLastMovieRequest {}

@@ -6,6 +6,6 @@ import (
 	"github.com/BlVladimir/GolangCourse/internal/domain"
 )
 
-type FilmProvider interface {
-	GetMovie(ctx context.Context, id int) (domain.Film, error)
+type MovieProvider interface {
+	GetMovie(ctx context.Context, id int) (domain.Movie, error)
 }

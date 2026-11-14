@@ -12,12 +12,16 @@ import (
 	"time"
 
 	"github.com/BlVladimir/GolangCourse/internal/adapter/filmstand"
+	"github.com/BlVladimir/GolangCourse/internal/adapter/postgres"
 	"github.com/BlVladimir/GolangCourse/internal/handler/grpc_api"
 	"github.com/BlVladimir/GolangCourse/internal/handler/http_api"
 	"github.com/BlVladimir/GolangCourse/internal/usecase"
 )
 
 func main() {
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
 	clientConfig, err := filmstand.LoadClientConfig()
 	if err != nil {
 		log.Fatalf("client config: %v", err)
@@ -28,8 +32,22 @@ func main() {
 		log.Fatalf("usecase config: %v", err)
 	}
 
+	repository, err := postgres.New(ctx, clientConfig.DatabaseURL)
+	if err != nil {
+		log.Fatalf("repository: %v", err)
+	}
+
+	err = repository.Migrate(ctx)
+	if err != nil {
+		log.Fatalf("migrate: %v", err)
+	}
+
 	provider := filmstand.NewClient(clientConfig)
-	service := usecase.NewFilmService(serviceConfig, provider)
+	service := usecase.NewFilmService(serviceConfig, provider, repository)
+	err = service.SyncDatabase(ctx)
+	if err != nil {
+		log.Fatalf("sync: %v", err)
+	}
 
 	// --- HTTP ---
 	httpConfig, err := http_api.LoadHTTPConfig()
@@ -72,11 +90,7 @@ func main() {
 		}
 	}()
 
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer stop()
 	<-ctx.Done()
-
-	log.Println("shutting down...")
 
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()

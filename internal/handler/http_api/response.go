@@ -2,36 +2,23 @@ package http_api
 
 import (
 	"github.com/BlVladimir/GolangCourse/internal/domain"
-	"github.com/BlVladimir/GolangCourse/internal/usecase"
 )
 
-type FilmError struct {
-	ID     int    `json:"id"     example:"5"`
-	Reason string `json:"reason" example:"status 404"`
-}
-
-type LoadFilmsResponse struct {
-	Movies []domain.Film `json:"movies"`
-	Errors []FilmError   `json:"errors"`
+type movieDTO struct {
+	ID       int    `json:"id"`
+	Title    string `json:"title"`
+	Year     int    `json:"year"`
+	Director string `json:"director"`
 }
 
 type ErrorResponse struct {
-	Error string `json:"error" example:"invalid range"`
+	Error string `json:"error"`
 }
 
-func toLoadFilmsResponse(report usecase.LoadReport) LoadFilmsResponse {
-	response := LoadFilmsResponse{
-		Movies: make([]domain.Film, 0, len(report.FilmResults)),
-		Errors: make([]FilmError, 0),
+func toMoviesDTO(movies []domain.Movie) []movieDTO {
+	out := make([]movieDTO, len(movies))
+	for idx, movie := range movies {
+		out[idx] = movieDTO{ID: movie.ID, Title: movie.Title, Year: movie.Year, Director: movie.Director}
 	}
-
-	for _, r := range report.FilmResults {
-		if r.Err != nil {
-			response.Errors = append(response.Errors, FilmError{ID: r.ID, Reason: r.Err.Error()})
-			continue
-		}
-		response.Movies = append(response.Movies, r.FilmInfo)
-	}
-
-	return response
+	return out
 }

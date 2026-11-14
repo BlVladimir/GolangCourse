@@ -8,7 +8,7 @@ import (
 	"github.com/BlVladimir/GolangCourse/internal/domain"
 )
 
-func findLastFilm(ctx context.Context, provider FilmProvider) (domain.Film, error) {
+func findLastMovie(ctx context.Context, provider MovieProvider) (domain.Movie, error) {
 	var err error = nil
 	var lowID int = 1
 	var highID int = 100000
@@ -18,13 +18,13 @@ func findLastFilm(ctx context.Context, provider FilmProvider) (domain.Film, erro
 		if errors.Is(err, domain.ErrNotFound) {
 			highID = midID - 1
 		} else if err != nil {
-			return domain.Film{}, err
+			return domain.Movie{}, err
 		} else {
 			lowID = midID + 1
 		}
 	}
 	if lowID == 1 {
-		return domain.Film{}, fmt.Errorf("stand has no films: %w", domain.ErrUpstream)
+		return domain.Movie{}, fmt.Errorf("stand has no films: %w", domain.ErrUpstream)
 	}
 	return provider.GetMovie(ctx, lowID-1)
 }

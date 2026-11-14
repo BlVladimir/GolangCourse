@@ -37,30 +37,30 @@ import (
 // 	return filmData, nil
 // }
 
-func readFilmWorker(
+func readMovieWorker(
 	ctx context.Context,
-	filmIDs <-chan int,
-	loadedFilms chan<- FilmResult,
-	provider FilmProvider,
+	movieIDs <-chan int,
+	loadedMovies chan<- MovieResult,
+	provider MovieProvider,
 	wg *sync.WaitGroup,
 ) {
 	defer wg.Done()
 
 	for {
 		select {
-		case id, ok := <-filmIDs:
+		case id, ok := <-movieIDs:
 			if !ok {
 				return
 			}
 
-			filmData, err := provider.GetMovie(ctx, id)
+			movieData, err := provider.GetMovie(ctx, id)
 			if ctx.Err() != nil {
 				return
 			}
 
-			film := FilmResult{ID: id, FilmInfo: filmData, Err: err}
+			movie := MovieResult{ID: id, MovieInfo: movieData, Err: err}
 			select {
-			case loadedFilms <- film:
+			case loadedMovies <- movie:
 			case <-ctx.Done():
 				return
 			}

@@ -8,11 +8,13 @@ import (
 
 type Config struct {
 	MovieBaseURL string
+	DatabaseURL  string
 	Timeout      time.Duration
 }
 
 const (
 	defaultMovieBaseURL = "https://homeworksite.site"
+	defaultDatabaseURL  = "postgresql://vblinov@localhost:5432/moviesdb?sslmode=disable"
 	defaultTimeout      = 5 * time.Second
 )
 
@@ -24,6 +26,7 @@ func LoadClientConfig() (Config, error) {
 
 	cnf := Config{
 		MovieBaseURL: envString("MOVIE_BASE_URL", defaultMovieBaseURL),
+		DatabaseURL:  envString("DATABASE_URL", defaultDatabaseURL),
 		Timeout:      timeout,
 	}
 

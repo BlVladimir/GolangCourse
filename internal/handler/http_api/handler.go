@@ -7,20 +7,19 @@ import (
 	"strconv"
 
 	"github.com/BlVladimir/GolangCourse/internal/domain"
-	"github.com/BlVladimir/GolangCourse/internal/usecase"
 )
 
-type FilmService interface {
-	LoadMovies(ctx context.Context, from, to int) (usecase.LoadReport, error)
-	GetLastMovie(ctx context.Context) (domain.Film, error)
+type MovieService interface {
+	LoadMovies(ctx context.Context, from, to int) ([]domain.Movie, error)
+	GetLastMovie(ctx context.Context) (domain.Movie, error)
 }
 
 type Handler struct {
-	svc FilmService
+	servies MovieService
 }
 
-func New(filmServise FilmService) *Handler {
-	return &Handler{svc: filmServise}
+func New(filmServise MovieService) *Handler {
+	return &Handler{servies: filmServise}
 }
 
 // LoadMovies godoc
@@ -40,7 +39,7 @@ func New(filmServise FilmService) *Handler {
 // @Failure      502 {object} ErrorResponse "Upstream unavailable"
 // @Failure      504 {object} ErrorResponse "Upstream timeout"
 // @Router       /load-movies [get]
-func (h *Handler) LoadMovies(w http.ResponseWriter, r *http.Request) {
+func (handler *Handler) LoadMovies(w http.ResponseWriter, r *http.Request) {
 	from, err := parseIntQuery(r, "from")
 	if err != nil {
 		writeError(w, http.StatusBadRequest, err.Error())
@@ -52,14 +51,14 @@ func (h *Handler) LoadMovies(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	report, err := h.svc.LoadMovies(r.Context(), from, to)
+	movies, err := handler.servies.LoadMovies(r.Context(), from, to)
 	if err != nil {
 		status, msg := mapError(err)
 		writeError(w, status, msg)
 		return
 	}
 
-	writeJSON(w, http.StatusOK, toLoadFilmsResponse(report))
+	writeJSON(w, http.StatusOK, toMoviesDTO(movies))
 }
 
 // GetLastMovie godoc
@@ -74,7 +73,7 @@ func (h *Handler) LoadMovies(w http.ResponseWriter, r *http.Request) {
 // @Failure      504 {object} ErrorResponse "Upstream timeout"
 // @Router       /last-movie [get]
 func (h *Handler) GetLastMovie(w http.ResponseWriter, r *http.Request) {
-	filmData, err := h.svc.GetLastMovie(r.Context())
+	filmData, err := h.servies.GetLastMovie(r.Context())
 	if err != nil {
 		status, msg := mapError(err)
 		writeError(w, status, msg)

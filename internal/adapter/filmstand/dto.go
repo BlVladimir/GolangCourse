@@ -9,6 +9,6 @@ type standMovie struct {
 	Director string `json:"director"`
 }
 
-func (stand standMovie) toDomain() domain.Film {
-	return domain.Film{ID: stand.ID, Title: stand.Title, Year: stand.Year, Director: stand.Director}
+func (stand standMovie) toDomain() domain.Movie {
+	return domain.Movie{ID: stand.ID, Title: stand.Title, Year: stand.Year, Director: stand.Director}
 }
