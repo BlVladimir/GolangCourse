@@ -2,13 +2,12 @@
 // versions:
 // - protoc-gen-go-grpc v1.6.2
 // - protoc             v7.36.2
-// source: api/proto/film.proto
+// source: api/proto/movie.proto
 
 package moviepb
 
 import (
 	context "context"
-
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -28,14 +27,15 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
-// MovieService serves film data from the external stand.
+// MovieService serves film data from the local database.
 type MovieServiceClient interface {
 	// LoadMovies returns movies with ids in [from; to].
-	// Partial per-film failures are reported in the `errors` field;
-	// the call itself returns OK when the range was processed.
-	LoadMovies(ctx context.Context, in *LoadMoviesRequest, opts ...grpc.CallOption) (*LoadFilmsResponse, error)
-	// GetLastMovie returns the film with the maximum existing id on the stand.
-	GetLastMovie(ctx context.Context, in *GetLastMovieRequest, opts ...grpc.CallOption) (*Film, error)
+	// All ids in a valid range are guaranteed to exist in the DB
+	// (populated at startup by Sync); missing rows would indicate
+	// a broken sync and are reported as an error.
+	LoadMovies(ctx context.Context, in *LoadMoviesRequest, opts ...grpc.CallOption) (*LoadMoviesResponse, error)
+	// GetLastMovie returns the film with the maximum id stored in the DB.
+	GetLastMovie(ctx context.Context, in *GetLastMovieRequest, opts ...grpc.CallOption) (*Movie, error)
 }
 
 type movieServiceClient struct {
@@ -46,9 +46,9 @@ func NewMovieServiceClient(cc grpc.ClientConnInterface) MovieServiceClient {
 	return &movieServiceClient{cc}
 }
 
-func (c *movieServiceClient) LoadMovies(ctx context.Context, in *LoadMoviesRequest, opts ...grpc.CallOption) (*LoadFilmsResponse, error) {
+func (c *movieServiceClient) LoadMovies(ctx context.Context, in *LoadMoviesRequest, opts ...grpc.CallOption) (*LoadMoviesResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(LoadFilmsResponse)
+	out := new(LoadMoviesResponse)
 	err := c.cc.Invoke(ctx, MovieService_LoadMovies_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -56,9 +56,9 @@ func (c *movieServiceClient) LoadMovies(ctx context.Context, in *LoadMoviesReque
 	return out, nil
 }
 
-func (c *movieServiceClient) GetLastMovie(ctx context.Context, in *GetLastMovieRequest, opts ...grpc.CallOption) (*Film, error) {
+func (c *movieServiceClient) GetLastMovie(ctx context.Context, in *GetLastMovieRequest, opts ...grpc.CallOption) (*Movie, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(Film)
+	out := new(Movie)
 	err := c.cc.Invoke(ctx, MovieService_GetLastMovie_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -70,14 +70,15 @@ func (c *movieServiceClient) GetLastMovie(ctx context.Context, in *GetLastMovieR
 // All implementations must embed UnimplementedMovieServiceServer
 // for forward compatibility.
 //
-// MovieService serves film data from the external stand.
+// MovieService serves film data from the local database.
 type MovieServiceServer interface {
 	// LoadMovies returns movies with ids in [from; to].
-	// Partial per-film failures are reported in the `errors` field;
-	// the call itself returns OK when the range was processed.
-	LoadMovies(context.Context, *LoadMoviesRequest) (*LoadFilmsResponse, error)
-	// GetLastMovie returns the film with the maximum existing id on the stand.
-	GetLastMovie(context.Context, *GetLastMovieRequest) (*Film, error)
+	// All ids in a valid range are guaranteed to exist in the DB
+	// (populated at startup by Sync); missing rows would indicate
+	// a broken sync and are reported as an error.
+	LoadMovies(context.Context, *LoadMoviesRequest) (*LoadMoviesResponse, error)
+	// GetLastMovie returns the film with the maximum id stored in the DB.
+	GetLastMovie(context.Context, *GetLastMovieRequest) (*Movie, error)
 	mustEmbedUnimplementedMovieServiceServer()
 }
 
@@ -88,10 +89,10 @@ type MovieServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedMovieServiceServer struct{}
 
-func (UnimplementedMovieServiceServer) LoadMovies(context.Context, *LoadMoviesRequest) (*LoadFilmsResponse, error) {
+func (UnimplementedMovieServiceServer) LoadMovies(context.Context, *LoadMoviesRequest) (*LoadMoviesResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method LoadMovies not implemented")
 }
-func (UnimplementedMovieServiceServer) GetLastMovie(context.Context, *GetLastMovieRequest) (*Film, error) {
+func (UnimplementedMovieServiceServer) GetLastMovie(context.Context, *GetLastMovieRequest) (*Movie, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetLastMovie not implemented")
 }
 func (UnimplementedMovieServiceServer) mustEmbedUnimplementedMovieServiceServer() {}
@@ -168,5 +169,5 @@ var MovieService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "api/proto/film.proto",
+	Metadata: "api/proto/movie.proto",
 }

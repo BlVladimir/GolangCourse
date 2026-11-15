@@ -16,6 +16,12 @@ service MovieService {
   rpc GetLastMovie(GetLastMovieRequest) returns (Movie);
 }
 
+message LoadMoviesResponse {
+  reserved 2;
+  reserved "errors";
+  repeated Movie movies = 1;
+}
+
 message LoadMoviesRequest {
   // from is the first movie id. Must be > 0 and <= to.
   int32 from = 1;

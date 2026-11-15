@@ -5,7 +5,6 @@ import (
 
 	moviepb "github.com/BlVladimir/GolangCourse/api/proto"
 	"github.com/BlVladimir/GolangCourse/internal/domain"
-	// "github.com/BlVladimir/GolangCourse/internal/usecase"
 )
 
 type FilmService interface {
@@ -15,27 +14,27 @@ type FilmService interface {
 
 type Server struct {
 	moviepb.UnimplementedMovieServiceServer
-	svc FilmService
+	service FilmService
 }
 
-func New(svc FilmService) *Server {
-	return &Server{svc: svc}
+func New(service FilmService) *Server {
+	return &Server{service: service}
 }
 
-func (s *Server) LoadMovies(ctx context.Context, req *moviepb.LoadMoviesRequest) ([]domain.Movie, error) {
-	from := int(req.GetFrom())
-	to := int(req.GetTo())
+func (server *Server) LoadMovies(ctx context.Context, request *moviepb.LoadMoviesRequest) (*moviepb.LoadMoviesResponse, error) {
+	from := int(request.GetFrom())
+	to := int(request.GetTo())
 
-	movies, err := s.svc.LoadMovies(ctx, from, to)
+	movies, err := server.service.LoadMovies(ctx, from, to)
 	if err != nil {
-		return nil, err
+		return nil, mapError(err)
 	}
 
-	return movies, nil
+	return toProtoResponse(movies), nil
 }
 
-func (s *Server) GetLastMovie(ctx context.Context, _ *moviepb.GetLastMovieRequest) (*moviepb.Film, error) {
-	filmData, err := s.svc.GetLastMovie(ctx)
+func (server *Server) GetLastMovie(ctx context.Context, _ *moviepb.GetLastMovieRequest) (*moviepb.Movie, error) {
+	filmData, err := server.service.GetLastMovie(ctx)
 	if err != nil {
 		return nil, mapError(err)
 	}

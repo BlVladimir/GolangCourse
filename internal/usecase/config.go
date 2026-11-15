@@ -10,7 +10,7 @@ type UseCaseConfig struct {
 	WorkersCount int
 }
 
-const defaultWorkers = 10
+const defaultWorkers = 30
 
 func LoadUseCaseConfig() (UseCaseConfig, error) {
 	workersCount, err := envInt("WORKERS", defaultWorkers)

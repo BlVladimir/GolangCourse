@@ -3,11 +3,10 @@ package grpc_api
 import (
 	moviepb "github.com/BlVladimir/GolangCourse/api/proto"
 	"github.com/BlVladimir/GolangCourse/internal/domain"
-	// "github.com/BlVladimir/GolangCourse/internal/usecase"
 )
 
-func toProtoFilm(film domain.Movie) *moviepb.Film {
-	return &moviepb.Film{
+func toProtoFilm(film domain.Movie) *moviepb.Movie {
+	return &moviepb.Movie{
 		Id:       int32(film.ID),
 		Title:    film.Title,
 		Year:     int32(film.Year),
@@ -15,20 +14,14 @@ func toProtoFilm(film domain.Movie) *moviepb.Film {
 	}
 }
 
-// func toProtoResponse(report usecase.LoadReport) *moviepb.LoadFilmsResponse {
-// 	resp := &moviepb.LoadFilmsResponse{
-// 		Movies: make([]*moviepb.Film, 0, len(report.MovieResults)),
-// 		Errors: make([]*moviepb.FilmError, 0),
-// 	}
-// 	for _, r := range report.MovieResults {
-// 		if r.Err != nil {
-// 			resp.Errors = append(resp.Errors, &moviepb.FilmError{
-// 				Id:     int32(r.ID),
-// 				Reason: r.Err.Error(),
-// 			})
-// 			continue
-// 		}
-// 		resp.Movies = append(resp.Movies, toProtoFilm(r.MovieInfo))
-// 	}
-// 	return resp
-// }
+func toProtoResponse(movies []domain.Movie) *moviepb.LoadMoviesResponse {
+	response := &moviepb.LoadMoviesResponse{
+		Movies: make([]*moviepb.Movie, 0, len(movies)),
+	}
+
+	for _, movie := range movies {
+		response.Movies = append(response.Movies, toProtoFilm(movie))
+	}
+
+	return response
+}
