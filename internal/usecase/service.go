@@ -58,11 +58,11 @@ func (useCase *MovieUseCase) SyncDatabase(ctx context.Context) error {
 		return nil
 	})
 
-	for workerNumber := 0; workerNumber < useCase.workersCount; workerNumber++ {
+	for i := 0; i < useCase.workersCount; i++ {
 		group.Go(func() error { return syncMovieWorker(groupCTX, movieIDs, useCase.provider, useCase.repository) })
 	}
 
-	return nil
+	return group.Wait()
 }
 
 func NewFilmService(config UseCaseConfig, provider MovieProvider, database Repository) *MovieUseCase {

@@ -15,10 +15,14 @@ type ErrorResponse struct {
 	Error string `json:"error"`
 }
 
-func toMoviesDTO(movies []domain.Movie) []movieDTO {
+func oneToMoviesDTO(movie domain.Movie) movieDTO {
+	return movieDTO{ID: movie.ID, Title: movie.Title, Year: movie.Year, Director: movie.Director}
+}
+
+func manyToMoviesDTO(movies []domain.Movie) []movieDTO {
 	out := make([]movieDTO, len(movies))
 	for idx, movie := range movies {
-		out[idx] = movieDTO{ID: movie.ID, Title: movie.Title, Year: movie.Year, Director: movie.Director}
+		out[idx] = oneToMoviesDTO(movie)
 	}
 	return out
 }
