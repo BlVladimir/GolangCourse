@@ -1,0 +1,10 @@
+basePath: /
+host: localhost:8080
+info:
+  contact: {}
+  description: Movie service backed by local PostgreSQL (synced from homeworksite.site
+    at startup).
+  title: Movie API
+  version: "1.0"
+paths: {}
+swagger: "2.0"
