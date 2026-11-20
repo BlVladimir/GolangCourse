@@ -3,8 +3,6 @@ package usecase
 import (
 	"context"
 
-	// "sync"
-
 	"github.com/BlVladimir/GolangCourse/internal/domain"
 	"golang.org/x/sync/errgroup"
 )
@@ -13,6 +11,7 @@ type MovieUseCase struct {
 	workersCount int
 	provider     MovieProvider
 	repository   Repository
+	movieSercher MovieSercher
 }
 
 func (useCase *MovieUseCase) LoadMovies(ctx context.Context, from int, to int) ([]domain.Movie, error) {
@@ -25,7 +24,10 @@ func (useCase *MovieUseCase) LoadMovies(ctx context.Context, from int, to int) (
 
 func (useCase *MovieUseCase) GetLastMovie(ctx context.Context) (domain.Movie, error) {
 	return useCase.repository.LastMovie(ctx)
-	// return findLastMovie(ctx, useCase.provider)
+}
+
+func (useCase *MovieUseCase) SearchMovie(ctx context.Context, query string) ([]domain.Movie, error) {
+	return nil, nil
 }
 
 func (useCase *MovieUseCase) SyncDatabase(ctx context.Context) error {
@@ -65,10 +67,11 @@ func (useCase *MovieUseCase) SyncDatabase(ctx context.Context) error {
 	return group.Wait()
 }
 
-func NewFilmService(config UseCaseConfig, provider MovieProvider, database Repository) *MovieUseCase {
+func NewFilmService(config UseCaseConfig, provider MovieProvider, database Repository, movieSercher MovieSercher) *MovieUseCase {
 	return &MovieUseCase{
 		workersCount: config.WorkersCount,
 		provider:     provider,
 		repository:   database,
+		movieSercher: movieSercher,
 	}
 }

@@ -13,6 +13,7 @@ import (
 
 	"github.com/BlVladimir/GolangCourse/internal/adapter/filmstand"
 	"github.com/BlVladimir/GolangCourse/internal/adapter/postgres"
+	"github.com/BlVladimir/GolangCourse/internal/adapter/redis"
 	"github.com/BlVladimir/GolangCourse/internal/handler/grpc_api"
 	"github.com/BlVladimir/GolangCourse/internal/handler/http_api"
 	"github.com/BlVladimir/GolangCourse/internal/usecase"
@@ -43,7 +44,8 @@ func main() {
 	}
 
 	provider := filmstand.NewClient(clientConfig)
-	service := usecase.NewFilmService(serviceConfig, provider, repository)
+	searcher := redis.MovieSercherMock{}
+	service := usecase.NewFilmService(serviceConfig, provider, repository, searcher)
 	err = service.SyncDatabase(ctx)
 	if err != nil {
 		log.Fatalf("sync: %v", err)
@@ -71,7 +73,7 @@ func main() {
 		}
 	}()
 
-	// // --- gRPC ---
+	// --- gRPC ---
 	grpcConfig, err := grpc_api.LoadGRPCConfig()
 	if err != nil {
 		log.Fatalf("http config: %v", err)
