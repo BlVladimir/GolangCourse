@@ -21,7 +21,13 @@ func (useCase *MovieUseCase) LoadMovies(ctx context.Context, from int, to int) (
 	if err != nil {
 		return nil, err
 	}
-	return useCase.repository.GetMoviesRange(ctx, from, to)
+
+	idsRange := make([]int, to+1-from)
+	for i := 0; i < to+1-from; i++ {
+		idsRange[i] = i + from
+	}
+
+	return useCase.repository.GetMoviesByIDs(ctx, idsRange)
 }
 
 func (useCase *MovieUseCase) GetLastMovie(ctx context.Context) (domain.Movie, error) {

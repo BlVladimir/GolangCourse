@@ -11,12 +11,6 @@ SELECT id, title, year, director
 FROM movies
 WHERE id = $1;
 
--- name: GetMoviesRange :many
-SELECT id, title, year, director
-FROM movies
-WHERE sqlc.arg(from_id) <= id AND id <= sqlc.arg(to_id)
-ORDER BY id;
-
 -- name: GetMoviesByIDs :many
 SELECT id, title, year, director
 FROM movies

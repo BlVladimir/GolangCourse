@@ -31,21 +31,6 @@ func (repository *Repository) GetMovie(ctx context.Context, id int) (domain.Movi
 	return toDomain(row), nil
 }
 
-func (repository *Repository) GetMoviesRange(ctx context.Context, from, to int) ([]domain.Movie, error) {
-	rows, err := repository.queries.GetMoviesRange(ctx, sqlc.GetMoviesRangeParams{
-		FromID: int64(from),
-		ToID:   int64(to),
-	})
-	if err != nil {
-		return nil, fmt.Errorf("postgres: get movies [%d..%d]: %w", from, to, err)
-	}
-	movies := make([]domain.Movie, len(rows))
-	for i, row := range rows {
-		movies[i] = toDomain(row)
-	}
-	return movies, nil
-}
-
 func (repository *Repository) GetMoviesByIDs(ctx context.Context, ids []int) ([]domain.Movie, error) {
 	if len(ids) == 0 {
 		return nil, nil

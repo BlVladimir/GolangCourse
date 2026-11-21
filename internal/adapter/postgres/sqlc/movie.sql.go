@@ -102,43 +102,6 @@ func (q *Queries) GetMoviesByIDs(ctx context.Context, ids []int64) ([]Movie, err
 	return items, nil
 }
 
-const getMoviesRange = `-- name: GetMoviesRange :many
-SELECT id, title, year, director
-FROM movies
-WHERE $1 <= id AND id <= $2
-ORDER BY id
-`
-
-type GetMoviesRangeParams struct {
-	FromID int64
-	ToID   int64
-}
-
-func (q *Queries) GetMoviesRange(ctx context.Context, arg GetMoviesRangeParams) ([]Movie, error) {
-	rows, err := q.db.Query(ctx, getMoviesRange, arg.FromID, arg.ToID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []Movie{}
-	for rows.Next() {
-		var i Movie
-		if err := rows.Scan(
-			&i.ID,
-			&i.Title,
-			&i.Year,
-			&i.Director,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const upsertMovie = `-- name: UpsertMovie :exec
 INSERT INTO movies (id, title, year, director)
 VALUES ($1, $2, $3, $4)
