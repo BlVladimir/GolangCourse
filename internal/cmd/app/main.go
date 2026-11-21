@@ -13,10 +13,11 @@ import (
 
 	"github.com/BlVladimir/GolangCourse/internal/adapter/filmstand"
 	"github.com/BlVladimir/GolangCourse/internal/adapter/postgres"
-	"github.com/BlVladimir/GolangCourse/internal/adapter/redis"
+	"github.com/BlVladimir/GolangCourse/internal/adapter/redis_searcher"
 	"github.com/BlVladimir/GolangCourse/internal/handler/grpc_api"
 	"github.com/BlVladimir/GolangCourse/internal/handler/http_api"
 	"github.com/BlVladimir/GolangCourse/internal/usecase"
+	"github.com/redis/go-redis/v9"
 )
 
 func main() {
@@ -43,12 +44,24 @@ func main() {
 		log.Fatalf("migrate: %v", err)
 	}
 
+	redisClient := redis.NewClient(&redis.Options{
+		Addr: clientConfig.RedisAddr,
+	})
+	if err := redisClient.Ping(ctx).Err(); err != nil {
+		log.Fatalf("redis ping: %v", err)
+	}
+
+	searcher := redis_searcher.NewMoviesSearcher(redisClient)
 	provider := filmstand.NewClient(clientConfig)
-	searcher := redis.MovieSearcherMock{}
+
 	service := usecase.NewFilmService(serviceConfig, provider, repository, searcher)
 	err = service.SyncDatabase(ctx)
 	if err != nil {
 		log.Fatalf("sync: %v", err)
+	}
+
+	if err := service.BuildIndex(ctx); err != nil {
+		log.Fatalf("build index: %v", err)
 	}
 
 	// --- HTTP ---

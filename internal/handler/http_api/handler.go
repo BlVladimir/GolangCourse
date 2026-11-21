@@ -5,12 +5,14 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/BlVladimir/GolangCourse/internal/domain"
 )
 
 type MovieService interface {
 	LoadMovies(ctx context.Context, from, to int) ([]domain.Movie, error)
+	SearchMovies(ctx context.Context, query string) ([]domain.Movie, error)
 	GetLastMovie(ctx context.Context) (domain.Movie, error)
 }
 
@@ -38,26 +40,26 @@ func New(movieServise MovieService) *Handler {
 // @Failure      400 {object} ErrorResponse
 // @Failure 	 500 {object} ErrorResponse
 // @Router       /load-movies [get]
-func (handler *Handler) LoadMovies(w http.ResponseWriter, r *http.Request) {
-	from, err := parseIntQuery(r, "from")
+func (handler *Handler) LoadMovies(writer http.ResponseWriter, request *http.Request) {
+	from, err := parseIntQuery(request, "from")
 	if err != nil {
-		writeError(w, http.StatusBadRequest, err.Error())
+		writeError(writer, http.StatusBadRequest, err.Error())
 		return
 	}
-	to, err := parseIntQuery(r, "to")
+	to, err := parseIntQuery(request, "to")
 	if err != nil {
-		writeError(w, http.StatusBadRequest, err.Error())
+		writeError(writer, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	movies, err := handler.services.LoadMovies(r.Context(), from, to)
+	movies, err := handler.services.LoadMovies(request.Context(), from, to)
 	if err != nil {
 		status, msg := mapError(err)
-		writeError(w, status, msg)
+		writeError(writer, status, msg)
 		return
 	}
 
-	writeJSON(w, http.StatusOK, manyToMoviesDTO(movies))
+	writeJSON(writer, http.StatusOK, manyToMoviesDTO(movies))
 }
 
 // GetLastMovie godoc
@@ -70,14 +72,42 @@ func (handler *Handler) LoadMovies(w http.ResponseWriter, r *http.Request) {
 // @Failure      404 {object} ErrorResponse
 // @Failure 	 500 {object} ErrorResponse
 // @Router       /last-movie [get]
-func (h *Handler) GetLastMovie(w http.ResponseWriter, r *http.Request) {
-	filmData, err := h.services.GetLastMovie(r.Context())
+func (h *Handler) GetLastMovie(writer http.ResponseWriter, request *http.Request) {
+	filmData, err := h.services.GetLastMovie(request.Context())
 	if err != nil {
 		status, msg := mapError(err)
-		writeError(w, status, msg)
+		writeError(writer, status, msg)
 		return
 	}
-	writeJSON(w, http.StatusOK, oneToMoviesDTO(filmData))
+	writeJSON(writer, http.StatusOK, oneToMoviesDTO(filmData))
+}
+
+// SearchMovies godoc
+//
+// @Summary      Search movies
+// @Description  Searches movies by query across indexed fields (title, description, director, actors, genres).
+// @Description  Results are cached in Redis for 1 hour.
+// @Tags         movies
+// @Produce      json
+// @Param        q query string true "Search query"
+// @Success      200 {array}  movieDTO
+// @Failure      400 {object} ErrorResponse "Missing or empty q"
+// @Failure      500 {object} ErrorResponse
+// @Router       /search [get]
+func (handler *Handler) SearchMovies(writer http.ResponseWriter, request *http.Request) {
+	query := request.URL.Query().Get("q")
+	if strings.TrimSpace(query) == "" {
+		writeError(writer, http.StatusBadRequest, "query parameter 'q' is required")
+		return
+	}
+
+	movies, err := handler.services.SearchMovies(request.Context(), query)
+	if err != nil {
+		status, msg := mapError(err)
+		writeError(writer, status, msg)
+		return
+	}
+	writeJSON(writer, http.StatusOK, manyToMoviesDTO(movies))
 }
 
 func parseIntQuery(r *http.Request, name string) (int, error) {

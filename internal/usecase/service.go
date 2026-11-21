@@ -34,13 +34,14 @@ func (useCase *MovieUseCase) GetLastMovie(ctx context.Context) (domain.Movie, er
 	return useCase.repository.LastMovie(ctx)
 }
 
-func (useCase *MovieUseCase) SearchMovie(ctx context.Context, query string) ([]domain.Movie, error) {
+func (useCase *MovieUseCase) SearchMovies(ctx context.Context, query string) ([]domain.Movie, error) {
 	query = strings.TrimSpace(strings.ToLower(query))
 	if query == "" {
 		return nil, domain.ErrInvalidSearchQuery
 	}
 
-	if movies, ok, err := useCase.searcher.GetCached(ctx, query); err != nil {
+	movies, ok, err := useCase.searcher.GetCached(ctx, query)
+	if err != nil {
 		return nil, fmt.Errorf("ceshe get: %w", err)
 	} else if ok {
 		return movies, nil
@@ -54,16 +55,19 @@ func (useCase *MovieUseCase) SearchMovie(ctx context.Context, query string) ([]d
 	if len(ids) == 0 {
 		err := useCase.searcher.SetCached(ctx, query, []domain.Movie{})
 		if err != nil {
-			return nil, fmt.Errorf("cache set: %w", err)
+			return nil, fmt.Errorf("ceche set: %w", err)
 		}
 		return nil, nil
 	}
 
-	movies, err := useCase.repository.GetMoviesByIDs(ctx, ids)
+	movies, err = useCase.repository.GetMoviesByIDs(ctx, ids)
+	if err != nil {
+		return nil, fmt.Errorf("get movies by ids: %w", err)
+	}
 
 	err = useCase.searcher.SetCached(ctx, query, movies)
 	if err != nil {
-		return nil, fmt.Errorf("cache set: %w", err)
+		return nil, fmt.Errorf("ceche set: %w", err)
 	}
 	return movies, nil
 
@@ -104,6 +108,26 @@ func (useCase *MovieUseCase) SyncDatabase(ctx context.Context) error {
 	}
 
 	return group.Wait()
+}
+
+func (useCase *MovieUseCase) BuildIndex(ctx context.Context) error {
+	lastMovie, err := findLastMovie(ctx, useCase.provider)
+	if err != nil {
+		return err
+	}
+
+	for movieID := 1; movieID <= lastMovie.ID; movieID++ {
+		movie, err := useCase.repository.GetMovie(ctx, movieID)
+		if err != nil {
+			return err
+		}
+
+		err = useCase.searcher.IndexMovie(ctx, movie)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func NewFilmService(config UseCaseConfig, provider MovieProvider, database Repository, movieSercher MovieSearcher) *MovieUseCase {

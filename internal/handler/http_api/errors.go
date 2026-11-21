@@ -28,6 +28,8 @@ func mapError(err error) (int, string) {
 	switch {
 	case errors.Is(err, domain.ErrInvalidRange):
 		return http.StatusBadRequest, err.Error()
+	case errors.Is(err, domain.ErrInvalidSearchQuery):
+		return http.StatusBadRequest, err.Error()
 	case errors.Is(err, domain.ErrNotFound):
 		return http.StatusNotFound, err.Error()
 	case errors.Is(err, domain.ErrUpstream):

@@ -8,11 +8,12 @@ import (
 	_ "github.com/BlVladimir/GolangCourse/api/swagger"
 )
 
-func NewRouter(h *Handler) http.Handler {
+func NewRouter(handler *Handler) http.Handler {
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("GET /load-movies", h.LoadMovies)
-	mux.HandleFunc("GET /last-movie", h.GetLastMovie)
+	mux.HandleFunc("GET /load-movies", handler.LoadMovies)
+	mux.HandleFunc("GET /search", handler.SearchMovies)
+	mux.HandleFunc("GET /last-movie", handler.GetLastMovie)
 
 	mux.Handle("/swagger/", httpSwagger.WrapHandler)
 
