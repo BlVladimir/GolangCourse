@@ -44,7 +44,7 @@ func main() {
 	}
 
 	provider := filmstand.NewClient(clientConfig)
-	searcher := redis.MovieSercherMock{}
+	searcher := redis.MovieSearcherMock{}
 	service := usecase.NewFilmService(serviceConfig, provider, repository, searcher)
 	err = service.SyncDatabase(ctx)
 	if err != nil {

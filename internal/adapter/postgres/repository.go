@@ -10,11 +10,13 @@ import (
 	"github.com/BlVladimir/GolangCourse/internal/adapter/postgres/sqlc"
 	"github.com/BlVladimir/GolangCourse/internal/domain"
 	"github.com/BlVladimir/GolangCourse/internal/usecase"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/pressly/goose/v3"
 )
 
 type Repository struct {
-	db      *sql.DB
+	pool    *pgxpool.Pool
 	queries *sqlc.Queries
 }
 
@@ -37,6 +39,27 @@ func (repository *Repository) GetMoviesRange(ctx context.Context, from, to int) 
 	if err != nil {
 		return nil, fmt.Errorf("postgres: get movies [%d..%d]: %w", from, to, err)
 	}
+	movies := make([]domain.Movie, len(rows))
+	for i, row := range rows {
+		movies[i] = toDomain(row)
+	}
+	return movies, nil
+}
+
+func (repository *Repository) GetMoviesByIDs(ctx context.Context, ids []int) ([]domain.Movie, error) {
+	if len(ids) == 0 {
+		return nil, nil
+	}
+
+	ids64 := make([]int64, len(ids))
+	for i, id := range ids {
+		ids64[i] = int64(id)
+	}
+	rows, err := repository.queries.GetMoviesByIDs(ctx, ids64)
+	if err != nil {
+		return nil, fmt.Errorf("postgres: get movies by ids: %W", err)
+	}
+
 	movies := make([]domain.Movie, len(rows))
 	for i, row := range rows {
 		movies[i] = toDomain(row)
@@ -81,14 +104,19 @@ func (repository *Repository) UpsertMovie(ctx context.Context, movie domain.Movi
 }
 
 //go:embed migrations/*.sql
-var migrationFiles embed.FS
+var migrationsFS embed.FS
 
-func (repository *Repository) Migrate(ctx context.Context) error {
-	goose.SetBaseFS(migrationFiles)
-	if err := goose.SetDialect("postgres"); err != nil {
+const migrationsDir = "migrations"
+
+func (r *Repository) Migrate(ctx context.Context) error {
+	sqlDB := stdlib.OpenDBFromPool(r.pool)
+	defer sqlDB.Close()
+
+	goose.SetBaseFS(migrationsFS)
+	if err := goose.SetDialect(string(goose.DialectPostgres)); err != nil {
 		return err
 	}
-	return goose.UpContext(ctx, repository.db, "migrations")
+	return goose.UpContext(ctx, sqlDB, migrationsDir)
 }
 
 func toDomain(movie sqlc.Movie) domain.Movie {

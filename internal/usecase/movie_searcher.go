@@ -6,7 +6,7 @@ import (
 	"github.com/BlVladimir/GolangCourse/internal/domain"
 )
 
-type MovieSercher interface {
+type MovieSearcher interface {
 	IndexMovie(ctx context.Context, movie domain.Movie) error
 	Search(ctx context.Context, words []string) ([]int, error)
 	Clear(ctx context.Context) error

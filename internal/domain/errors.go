@@ -8,4 +8,6 @@ var (
 	ErrNotFound = errors.New("film not found")
 
 	ErrUpstream = errors.New("upstream unavailable")
+
+	ErrInvalidSearchQuery = errors.New("invalid search query")
 )

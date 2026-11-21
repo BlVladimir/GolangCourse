@@ -14,7 +14,7 @@ SELECT id FROM movies
 `
 
 func (q *Queries) ExistIDs(ctx context.Context) ([]int64, error) {
-	rows, err := q.db.QueryContext(ctx, existIDs)
+	rows, err := q.db.Query(ctx, existIDs)
 	if err != nil {
 		return nil, err
 	}
@@ -26,9 +26,6 @@ func (q *Queries) ExistIDs(ctx context.Context) ([]int64, error) {
 			return nil, err
 		}
 		items = append(items, id)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -44,7 +41,7 @@ LIMIT 1
 `
 
 func (q *Queries) GetLastMovie(ctx context.Context) (Movie, error) {
-	row := q.db.QueryRowContext(ctx, getLastMovie)
+	row := q.db.QueryRow(ctx, getLastMovie)
 	var i Movie
 	err := row.Scan(
 		&i.ID,
@@ -62,7 +59,7 @@ WHERE id = $1
 `
 
 func (q *Queries) GetMovie(ctx context.Context, id int64) (Movie, error) {
-	row := q.db.QueryRowContext(ctx, getMovie, id)
+	row := q.db.QueryRow(ctx, getMovie, id)
 	var i Movie
 	err := row.Scan(
 		&i.ID,
@@ -73,20 +70,15 @@ func (q *Queries) GetMovie(ctx context.Context, id int64) (Movie, error) {
 	return i, err
 }
 
-const getMoviesRange = `-- name: GetMoviesRange :many
+const getMoviesByIDs = `-- name: GetMoviesByIDs :many
 SELECT id, title, year, director
 FROM movies
-WHERE $1 <= id AND id <= $2
+WHERE id = ANY($1::bigint[])
 ORDER BY id
 `
 
-type GetMoviesRangeParams struct {
-	FromID int64
-	ToID   int64
-}
-
-func (q *Queries) GetMoviesRange(ctx context.Context, arg GetMoviesRangeParams) ([]Movie, error) {
-	rows, err := q.db.QueryContext(ctx, getMoviesRange, arg.FromID, arg.ToID)
+func (q *Queries) GetMoviesByIDs(ctx context.Context, ids []int64) ([]Movie, error) {
+	rows, err := q.db.Query(ctx, getMoviesByIDs, ids)
 	if err != nil {
 		return nil, err
 	}
@@ -104,8 +96,42 @@ func (q *Queries) GetMoviesRange(ctx context.Context, arg GetMoviesRangeParams) 
 		}
 		items = append(items, i)
 	}
-	if err := rows.Close(); err != nil {
+	if err := rows.Err(); err != nil {
 		return nil, err
+	}
+	return items, nil
+}
+
+const getMoviesRange = `-- name: GetMoviesRange :many
+SELECT id, title, year, director
+FROM movies
+WHERE $1 <= id AND id <= $2
+ORDER BY id
+`
+
+type GetMoviesRangeParams struct {
+	FromID int64
+	ToID   int64
+}
+
+func (q *Queries) GetMoviesRange(ctx context.Context, arg GetMoviesRangeParams) ([]Movie, error) {
+	rows, err := q.db.Query(ctx, getMoviesRange, arg.FromID, arg.ToID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Movie{}
+	for rows.Next() {
+		var i Movie
+		if err := rows.Scan(
+			&i.ID,
+			&i.Title,
+			&i.Year,
+			&i.Director,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -130,7 +156,7 @@ type UpsertMovieParams struct {
 }
 
 func (q *Queries) UpsertMovie(ctx context.Context, arg UpsertMovieParams) error {
-	_, err := q.db.ExecContext(ctx, upsertMovie,
+	_, err := q.db.Exec(ctx, upsertMovie,
 		arg.ID,
 		arg.Title,
 		arg.Year,

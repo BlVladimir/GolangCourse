@@ -2,6 +2,8 @@ package usecase
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	"github.com/BlVladimir/GolangCourse/internal/domain"
 	"golang.org/x/sync/errgroup"
@@ -11,7 +13,7 @@ type MovieUseCase struct {
 	workersCount int
 	provider     MovieProvider
 	repository   Repository
-	movieSercher MovieSercher
+	searcher     MovieSearcher
 }
 
 func (useCase *MovieUseCase) LoadMovies(ctx context.Context, from int, to int) ([]domain.Movie, error) {
@@ -27,7 +29,38 @@ func (useCase *MovieUseCase) GetLastMovie(ctx context.Context) (domain.Movie, er
 }
 
 func (useCase *MovieUseCase) SearchMovie(ctx context.Context, query string) ([]domain.Movie, error) {
-	return nil, nil
+	query = strings.TrimSpace(strings.ToLower(query))
+	if query == "" {
+		return nil, domain.ErrInvalidSearchQuery
+	}
+
+	if movies, ok, err := useCase.searcher.GetCached(ctx, query); err != nil {
+		return nil, fmt.Errorf("ceshe get: %w", err)
+	} else if ok {
+		return movies, nil
+	}
+
+	words := strings.Fields(query)
+	ids, err := useCase.searcher.Search(ctx, words)
+	if err != nil {
+		return nil, fmt.Errorf("search: %w", err)
+	}
+	if len(ids) == 0 {
+		err := useCase.searcher.SetCached(ctx, query, []domain.Movie{})
+		if err != nil {
+			return nil, fmt.Errorf("cache set: %w", err)
+		}
+		return nil, nil
+	}
+
+	movies, err := useCase.repository.GetMoviesByIDs(ctx, ids)
+
+	err = useCase.searcher.SetCached(ctx, query, movies)
+	if err != nil {
+		return nil, fmt.Errorf("cache set: %w", err)
+	}
+	return movies, nil
+
 }
 
 func (useCase *MovieUseCase) SyncDatabase(ctx context.Context) error {
@@ -67,11 +100,11 @@ func (useCase *MovieUseCase) SyncDatabase(ctx context.Context) error {
 	return group.Wait()
 }
 
-func NewFilmService(config UseCaseConfig, provider MovieProvider, database Repository, movieSercher MovieSercher) *MovieUseCase {
+func NewFilmService(config UseCaseConfig, provider MovieProvider, database Repository, movieSercher MovieSearcher) *MovieUseCase {
 	return &MovieUseCase{
 		workersCount: config.WorkersCount,
 		provider:     provider,
 		repository:   database,
-		movieSercher: movieSercher,
+		searcher:     movieSercher,
 	}
 }

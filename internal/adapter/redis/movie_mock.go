@@ -7,25 +7,25 @@ import (
 	"github.com/BlVladimir/GolangCourse/internal/usecase"
 )
 
-type MovieSercherMock struct{}
+type MovieSearcherMock struct{}
 
-func (searcher MovieSercherMock) IndexMovie(ctx context.Context, movie domain.Movie) error {
+func (searcher MovieSearcherMock) IndexMovie(ctx context.Context, movie domain.Movie) error {
 	return nil
 }
 
-func (searcher MovieSercherMock) Search(ctx context.Context, words []string) ([]int, error) {
+func (searcher MovieSearcherMock) Search(ctx context.Context, words []string) ([]int, error) {
 	return []int{}, nil
 }
 
-func (searcher MovieSercherMock) Clear(ctx context.Context) error {
+func (searcher MovieSearcherMock) Clear(ctx context.Context) error {
 	return nil
 }
-func (searcher MovieSercherMock) GetCached(ctx context.Context, query string) (movies []domain.Movie, ok bool, err error) {
+func (searcher MovieSearcherMock) GetCached(ctx context.Context, query string) (movies []domain.Movie, ok bool, err error) {
 	return []domain.Movie{}, true, nil
 }
 
-func (searcher MovieSercherMock) SetCached(ctx context.Context, query string, movies []domain.Movie) error {
+func (searcher MovieSearcherMock) SetCached(ctx context.Context, query string, movies []domain.Movie) error {
 	return nil
 }
 
-var _ usecase.MovieSercher = MovieSercherMock{}
+var _ usecase.MovieSearcher = MovieSearcherMock{}
