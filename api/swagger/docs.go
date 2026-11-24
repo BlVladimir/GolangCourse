@@ -83,23 +83,20 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/http_api.LoadMoviesResponse"
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/http_api.movieDTO"
+                            }
                         }
                     },
                     "400": {
-                        "description": "Invalid or missing from/to",
+                        "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/http_api.ErrorResponse"
                         }
                     },
-                    "502": {
-                        "description": "Upstream unavailable",
-                        "schema": {
-                            "$ref": "#/definitions/http_api.ErrorResponse"
-                        }
-                    },
-                    "504": {
-                        "description": "Upstream timeout",
+                    "500": {
+                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/http_api.ErrorResponse"
                         }
@@ -113,38 +110,24 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "error": {
-                    "type": "string",
-                    "example": "invalid range"
+                    "type": "string"
                 }
             }
         },
-        "http_api.FilmError": {
+        "http_api.movieDTO": {
             "type": "object",
             "properties": {
+                "director": {
+                    "type": "string"
+                },
                 "id": {
-                    "type": "integer",
-                    "example": 5
+                    "type": "integer"
                 },
-                "reason": {
-                    "type": "string",
-                    "example": "status 404"
-                }
-            }
-        },
-        "http_api.LoadMoviesResponse": {
-            "type": "object",
-            "properties": {
-                "errors": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/http_api.FilmError"
-                    }
+                "title": {
+                    "type": "string"
                 },
-                "movies": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/model.Film"
-                    }
+                "year": {
+                    "type": "integer"
                 }
             }
         },

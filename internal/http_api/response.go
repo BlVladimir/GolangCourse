@@ -1,32 +1,28 @@
 package http_api
 
-import "github.com/BlVladimir/GolangCourse/internal/model"
+import (
+	"github.com/BlVladimir/GolangCourse/internal/model"
+)
 
-type FilmError struct {
-	ID     int    `json:"id"     example:"5"`
-	Reason string `json:"reason" example:"status 404"`
-}
-
-type LoadMoviesResponse struct {
-	Movies []model.Film `json:"movies"`
-	Errors []FilmError  `json:"errors"`
+type movieDTO struct {
+	ID       int    `json:"id"`
+	Title    string `json:"title"`
+	Year     int    `json:"year"`
+	Director string `json:"director"`
 }
 
 type ErrorResponse struct {
-	Error string `json:"error" example:"invalid range"`
+	Error string `json:"error"`
 }
 
-func toLoadMoviesResponse(report model.LoadReport) LoadMoviesResponse {
-	response := LoadMoviesResponse{
-		Movies: make([]model.Film, 0, len(report.FilmResults)),
-		Errors: make([]FilmError, 0),
+func oneToMoviesDTO(movie model.Film) movieDTO {
+	return movieDTO{ID: movie.ID, Title: movie.Title, Year: movie.Year, Director: movie.Director}
+}
+
+func manyToMoviesDTO(movies []model.Film) []movieDTO {
+	out := make([]movieDTO, len(movies))
+	for idx, movie := range movies {
+		out[idx] = oneToMoviesDTO(movie)
 	}
-	for _, r := range report.FilmResults {
-		if r.Err != nil {
-			response.Errors = append(response.Errors, FilmError{ID: r.ID, Reason: r.Err.Error()})
-			continue
-		}
-		response.Movies = append(response.Movies, r.FilmInfo)
-	}
-	return response
+	return out
 }

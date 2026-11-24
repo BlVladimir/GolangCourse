@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/BlVladimir/GolangCourse/internal/model"
+	"golang.org/x/sync/errgroup"
 )
 
 type FilmService struct {
@@ -16,31 +17,35 @@ type FilmService struct {
 	timeout      time.Duration
 }
 
-func (service *FilmService) LoadMovies(ctx context.Context, from int, to int) (model.LoadReport, error) {
+func (service *FilmService) LoadMovies(ctx context.Context, from int, to int) ([]model.Film, error) {
 	requestValidationErr := requestValidate(from, to)
 	if requestValidationErr != nil {
-		return model.LoadReport{}, requestValidationErr
+		return nil, requestValidationErr
 	}
 
 	filmIDs := make(chan int)
-	loadedFilms := make(chan model.FilmResult)
+	loadedFilms := make(chan model.Film)
 
-	var wg sync.WaitGroup
-
-	go func() {
+	// var wg sync.WaitGroup
+	group, groupCTX := errgroup.WithContext(ctx)
+	group.Go(func() error {
 		defer close(filmIDs)
 		for filmID := from; filmID <= to; filmID++ {
 			select {
 			case filmIDs <- filmID:
-			case <-ctx.Done():
-				return
+			case <-groupCTX.Done():
+				return groupCTX.Err()
 			}
 		}
-	}()
+		return nil
+	})
 
+	var wg sync.WaitGroup
 	for workerNumber := 0; workerNumber < service.workersCount; workerNumber++ {
 		wg.Add(1)
-		go readFilmWorker(ctx, service.baseURL, filmIDs, loadedFilms, service.client, service.timeout, &wg)
+		group.Go(func() error {
+			return readFilmWorker(groupCTX, service.baseURL, filmIDs, loadedFilms, service.client, service.timeout, &wg)
+		})
 	}
 
 	go func() {
@@ -48,18 +53,15 @@ func (service *FilmService) LoadMovies(ctx context.Context, from int, to int) (m
 		close(loadedFilms)
 	}()
 
-	var filmResults []model.FilmResult
-	for {
-		select {
-		case <-ctx.Done():
-			return model.LoadReport{}, ctx.Err() // клиент ушёл — не дочитываем
-		case filmResult, ok := <-loadedFilms:
-			if !ok {
-				return model.LoadReport{FilmResults: filmResults}, nil
-			}
-			filmResults = append(filmResults, filmResult)
-		}
+	var films []model.Film
+	for film := range loadedFilms {
+		films = append(films, film)
 	}
+
+	if err := group.Wait(); err != nil {
+		return nil, err
+	}
+	return films, nil
 }
 
 func (service *FilmService) GetLastMovie(ctx context.Context) (model.Film, error) {

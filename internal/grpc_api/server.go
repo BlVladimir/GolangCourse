@@ -8,7 +8,7 @@ import (
 )
 
 type FilmService interface {
-	LoadMovies(ctx context.Context, from, to int) (model.LoadReport, error)
+	LoadMovies(ctx context.Context, from, to int) ([]model.Film, error)
 	GetLastMovie(ctx context.Context) (model.Film, error)
 }
 

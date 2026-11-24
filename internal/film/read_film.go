@@ -28,10 +28,12 @@ func readFilm(ctx context.Context, baseURL string, filmID int, client *http.Clie
 	}
 	defer response.Body.Close()
 
-	if response.StatusCode == http.StatusNotFound {
-		return model.Film{}, ErrNotFound
-	} else if response.StatusCode != http.StatusOK {
-		return model.Film{}, fmt.Errorf("status %d", response.StatusCode)
+	switch response.StatusCode {
+	case http.StatusOK:
+	case http.StatusNotFound:
+		return model.Film{}, fmt.Errorf("film %d: %w", filmID, ErrNotFound)
+	default:
+		return model.Film{}, fmt.Errorf("%w: film %d: status %d", ErrUpstream, filmID, response.StatusCode)
 	}
 
 	var filmData model.Film
@@ -47,34 +49,33 @@ func readFilmWorker(
 	ctx context.Context,
 	baseURL string,
 	filmIDs <-chan int,
-	loadedFilms chan<- model.FilmResult,
+	loadedFilms chan<- model.Film,
 	client *http.Client,
 	timeout time.Duration,
 	wg *sync.WaitGroup,
-) {
+) error {
 	defer wg.Done()
 
 	for {
 		select {
 		case id, ok := <-filmIDs:
 			if !ok {
-				return
+				return nil
 			}
 
-			filmData, err := readFilm(ctx, baseURL, id, client, timeout)
-			if ctx.Err() != nil {
-				return
+			film, err := readFilm(ctx, baseURL, id, client, timeout)
+			if err != nil {
+				return err
 			}
 
-			film := model.FilmResult{ID: id, FilmInfo: filmData, Err: err}
 			select {
 			case loadedFilms <- film:
 			case <-ctx.Done():
-				return
+				return nil
 			}
 
 		case <-ctx.Done():
-			return
+			return nil
 		}
 	}
 }

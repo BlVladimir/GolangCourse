@@ -14,20 +14,12 @@ func toProtoFilm(f model.Film) *moviepb.Movie {
 	}
 }
 
-func toProtoResponse(report model.LoadReport) *moviepb.LoadMoviesResponse {
+func toProtoResponse(movies []model.Film) *moviepb.LoadMoviesResponse {
 	resp := &moviepb.LoadMoviesResponse{
-		Movies: make([]*moviepb.Movie, 0, len(report.FilmResults)),
-		Errors: make([]*moviepb.FilmError, 0),
+		Movies: make([]*moviepb.Movie, 0, len(movies)),
 	}
-	for _, r := range report.FilmResults {
-		if r.Err != nil {
-			resp.Errors = append(resp.Errors, &moviepb.FilmError{
-				Id:     int32(r.ID),
-				Reason: r.Err.Error(),
-			})
-			continue
-		}
-		resp.Movies = append(resp.Movies, toProtoFilm(r.FilmInfo))
+	for _, movie := range movies {
+		resp.Movies = append(resp.Movies, toProtoFilm(movie))
 	}
 	return resp
 }

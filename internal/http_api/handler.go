@@ -10,7 +10,7 @@ import (
 )
 
 type FilmService interface {
-	LoadMovies(ctx context.Context, from, to int) (model.LoadReport, error)
+	LoadMovies(ctx context.Context, from, to int) ([]model.Film, error)
 	GetLastMovie(ctx context.Context) (model.Film, error)
 }
 
@@ -34,12 +34,11 @@ func New(svc FilmService) *Handler {
 // @Produce      json
 // @Param        from query int true "First movie id"
 // @Param        to   query int true "Last movie id"
-// @Success      200 {object} LoadMoviesResponse
-// @Failure      400 {object} ErrorResponse "Invalid or missing from/to"
-// @Failure      502 {object} ErrorResponse "Upstream unavailable"
-// @Failure      504 {object} ErrorResponse "Upstream timeout"
+// @Success      200 {array} movieDTO
+// @Failure      400 {object} ErrorResponse
+// @Failure 	 500 {object} ErrorResponse
 // @Router       /load-movies [get]
-func (h *Handler) LoadMovies(w http.ResponseWriter, r *http.Request) {
+func (handler *Handler) LoadMovies(w http.ResponseWriter, r *http.Request) {
 	from, err := parseIntQuery(r, "from")
 	if err != nil {
 		writeError(w, http.StatusBadRequest, err.Error())
@@ -51,14 +50,14 @@ func (h *Handler) LoadMovies(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	report, err := h.svc.LoadMovies(r.Context(), from, to)
+	movies, err := handler.svc.LoadMovies(r.Context(), from, to)
 	if err != nil {
 		status, msg := mapError(err)
 		writeError(w, status, msg)
 		return
 	}
 
-	writeJSON(w, http.StatusOK, toLoadMoviesResponse(report))
+	writeJSON(w, http.StatusOK, manyToMoviesDTO(movies))
 }
 
 // GetLastMovie godoc
