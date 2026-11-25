@@ -3,28 +3,18 @@ definitions:
   http_api.ErrorResponse:
     properties:
       error:
-        example: invalid range
         type: string
     type: object
-  http_api.FilmError:
+  http_api.movieDTO:
     properties:
+      director:
+        type: string
       id:
-        example: 5
         type: integer
-      reason:
-        example: status 404
+      title:
         type: string
-    type: object
-  http_api.LoadMoviesResponse:
-    properties:
-      errors:
-        items:
-          $ref: '#/definitions/http_api.FilmError'
-        type: array
-      movies:
-        items:
-          $ref: '#/definitions/model.Film'
-        type: array
+      year:
+        type: integer
     type: object
   model.Film:
     properties:
@@ -89,17 +79,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/http_api.LoadMoviesResponse'
+            items:
+              $ref: '#/definitions/http_api.movieDTO'
+            type: array
         "400":
-          description: Invalid or missing from/to
+          description: Bad Request
           schema:
             $ref: '#/definitions/http_api.ErrorResponse'
-        "502":
-          description: Upstream unavailable
-          schema:
-            $ref: '#/definitions/http_api.ErrorResponse'
-        "504":
-          description: Upstream timeout
+        "500":
+          description: Internal Server Error
           schema:
             $ref: '#/definitions/http_api.ErrorResponse'
       summary: Load movies in a range
