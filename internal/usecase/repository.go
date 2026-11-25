@@ -1,0 +1,15 @@
+package usecase
+
+import (
+	"context"
+
+	"github.com/BlVladimir/GolangCourse/internal/domain"
+)
+
+type Repository interface {
+	GetMovie(ctx context.Context, id int) (domain.Movie, error)
+	GetMoviesRange(ctx context.Context, from int, to int) ([]domain.Movie, error)
+	LastMovie(ctx context.Context) (domain.Movie, error)
+	ExistIDs(ctx context.Context) (map[int]struct{}, error)
+	UpsertMovie(ctx context.Context, movie domain.Movie) error
+}
