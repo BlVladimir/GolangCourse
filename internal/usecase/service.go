@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/BlVladimir/GolangCourse/internal/domain"
+	"golang.org/x/sync/errgroup"
 )
 
 type FilmUseCase struct {
@@ -12,31 +13,34 @@ type FilmUseCase struct {
 	provider     FilmProvider
 }
 
-func (useCase *FilmUseCase) LoadMovies(ctx context.Context, from int, to int) (LoadReport, error) {
+func (useCase *FilmUseCase) LoadMovies(ctx context.Context, from int, to int) ([]domain.Film, error) {
 	requestValidationErr := requestValidate(from, to)
 	if requestValidationErr != nil {
-		return LoadReport{}, requestValidationErr
+		return nil, requestValidationErr
 	}
 
 	filmIDs := make(chan int)
-	loadedFilms := make(chan FilmResult)
+	loadedFilms := make(chan domain.Film)
 
-	var wg sync.WaitGroup
-
-	go func() {
+	group, groupCTX := errgroup.WithContext(ctx)
+	group.Go(func() error {
 		defer close(filmIDs)
 		for filmID := from; filmID <= to; filmID++ {
 			select {
 			case filmIDs <- filmID:
-			case <-ctx.Done():
-				return
+			case <-groupCTX.Done():
+				return groupCTX.Err()
 			}
 		}
-	}()
+		return nil
+	})
 
+	var wg sync.WaitGroup
 	for workerNumber := 0; workerNumber < useCase.workersCount; workerNumber++ {
 		wg.Add(1)
-		go readFilmWorker(ctx, filmIDs, loadedFilms, useCase.provider, &wg)
+		group.Go(func() error {
+			return readFilmWorker(groupCTX, filmIDs, loadedFilms, useCase.provider, &wg)
+		})
 	}
 
 	go func() {
@@ -44,18 +48,15 @@ func (useCase *FilmUseCase) LoadMovies(ctx context.Context, from int, to int) (L
 		close(loadedFilms)
 	}()
 
-	var filmResults []FilmResult
-	for {
-		select {
-		case <-ctx.Done():
-			return LoadReport{}, ctx.Err() // клиент ушёл — не дочитываем
-		case filmResult, ok := <-loadedFilms:
-			if !ok {
-				return LoadReport{FilmResults: filmResults}, nil
-			}
-			filmResults = append(filmResults, filmResult)
-		}
+	var films []domain.Film
+	for film := range loadedFilms {
+		films = append(films, film)
 	}
+
+	if err := group.Wait(); err != nil {
+		return nil, err
+	}
+	return films, nil
 }
 
 func (useCase *FilmUseCase) GetLastMovie(ctx context.Context) (domain.Film, error) {
