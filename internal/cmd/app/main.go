@@ -14,6 +14,7 @@ import (
 	"github.com/BlVladimir/GolangCourse/internal/adapter/filmstand"
 	"github.com/BlVladimir/GolangCourse/internal/adapter/postgres"
 	"github.com/BlVladimir/GolangCourse/internal/adapter/redis_searcher"
+	"github.com/BlVladimir/GolangCourse/internal/config"
 	"github.com/BlVladimir/GolangCourse/internal/handler/grpc_api"
 	"github.com/BlVladimir/GolangCourse/internal/handler/http_api"
 	"github.com/BlVladimir/GolangCourse/internal/usecase"
@@ -24,17 +25,12 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	clientConfig, err := filmstand.LoadClientConfig()
+	cnf, err := config.LoadConfig()
 	if err != nil {
-		log.Fatalf("client config: %v", err)
+		log.Fatalf("config: %v", err)
 	}
 
-	serviceConfig, err := usecase.LoadUseCaseConfig()
-	if err != nil {
-		log.Fatalf("usecase config: %v", err)
-	}
-
-	repository, err := postgres.New(ctx, clientConfig.DatabaseURL)
+	repository, err := postgres.New(ctx, cnf.DatabaseURL)
 	if err != nil {
 		log.Fatalf("repository: %v", err)
 	}
@@ -45,16 +41,16 @@ func main() {
 	}
 
 	redisClient := redis.NewClient(&redis.Options{
-		Addr: clientConfig.RedisAddr,
+		Addr: cnf.RedisAddr,
 	})
 	if err := redisClient.Ping(ctx).Err(); err != nil {
 		log.Fatalf("redis ping: %v", err)
 	}
 
 	searcher := redis_searcher.NewMoviesSearcher(redisClient)
-	provider := filmstand.NewClient(clientConfig)
+	provider := filmstand.NewClient(cnf)
 
-	service := usecase.NewFilmService(serviceConfig, provider, repository, searcher)
+	service := usecase.NewFilmService(cnf, provider, repository, searcher)
 	err = service.SyncDatabase(ctx)
 	if err != nil {
 		log.Fatalf("sync: %v", err)
@@ -65,13 +61,8 @@ func main() {
 	}
 
 	// --- HTTP ---
-	httpConfig, err := http_api.LoadHTTPConfig()
-	if err != nil {
-		log.Fatalf("http config: %v", err)
-	}
-
 	httpServer := &http.Server{
-		Addr:              httpConfig.HTTPAddr,
+		Addr:              cnf.HTTPAddr,
 		Handler:           http_api.NewRouter(http_api.New(service)),
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       10 * time.Second,
@@ -80,26 +71,22 @@ func main() {
 	}
 
 	go func() {
-		log.Printf("HTTP listening on %s", httpConfig.HTTPAddr)
+		log.Printf("HTTP listening on %s", cnf.HTTPAddr)
 		if err := httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Fatalf("http: %v", err)
 		}
 	}()
 
 	// --- gRPC ---
-	grpcConfig, err := grpc_api.LoadGRPCConfig()
-	if err != nil {
-		log.Fatalf("http config: %v", err)
-	}
 	grpcSrv := grpc_api.NewGRPCServer(service)
 
-	lis, err := net.Listen("tcp", grpcConfig.GRPCAddr)
+	lis, err := net.Listen("tcp", cnf.GRPCAddr)
 	if err != nil {
-		log.Fatalf("grpc listen %s: %v", grpcConfig.GRPCAddr, err)
+		log.Fatalf("grpc listen %s: %v", cnf.GRPCAddr, err)
 	}
 
 	go func() {
-		log.Printf("gRPC listening on %s", grpcConfig.GRPCAddr)
+		log.Printf("gRPC listening on %s", cnf.GRPCAddr)
 		if err := grpcSrv.Serve(lis); err != nil {
 			log.Fatalf("grpc: %v", err)
 		}

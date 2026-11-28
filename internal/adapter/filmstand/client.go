@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/BlVladimir/GolangCourse/internal/config"
 	"github.com/BlVladimir/GolangCourse/internal/domain"
 	"github.com/BlVladimir/GolangCourse/internal/usecase"
 )
@@ -48,13 +49,13 @@ func (client *Client) GetMovie(ctx context.Context, id int) (domain.Movie, error
 	return filmData.toDomain(), nil
 }
 
-func NewClient(config Config) *Client {
+func NewClient(cnf config.Config) *Client {
 	client := &http.Client{}
 
 	return &Client{
 		client:  client,
-		baseURL: config.MovieBaseURL,
-		timeout: config.Timeout,
+		baseURL: cnf.MovieBaseURL,
+		timeout: cnf.Timeout,
 	}
 }
 

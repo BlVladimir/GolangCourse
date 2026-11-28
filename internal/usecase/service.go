@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/BlVladimir/GolangCourse/internal/config"
 	"github.com/BlVladimir/GolangCourse/internal/domain"
 	"golang.org/x/sync/errgroup"
 )
@@ -96,7 +97,7 @@ func (useCase *MovieUseCase) SyncDatabase(ctx context.Context) error {
 			}
 			select {
 			case movieIDs <- movieID:
-			case <-ctx.Done():
+			case <-groupCTX.Done():
 				return groupCTX.Err()
 			}
 		}
@@ -130,9 +131,9 @@ func (useCase *MovieUseCase) BuildIndex(ctx context.Context) error {
 	return nil
 }
 
-func NewFilmService(config UseCaseConfig, provider MovieProvider, database Repository, movieSercher MovieSearcher) *MovieUseCase {
+func NewFilmService(cnf config.Config, provider MovieProvider, database Repository, movieSercher MovieSearcher) *MovieUseCase {
 	return &MovieUseCase{
-		workersCount: config.WorkersCount,
+		workersCount: cnf.WorkersCount,
 		provider:     provider,
 		repository:   database,
 		searcher:     movieSercher,
