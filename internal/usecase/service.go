@@ -112,6 +112,10 @@ func (useCase *MovieUseCase) SyncDatabase(ctx context.Context) error {
 }
 
 func (useCase *MovieUseCase) BuildIndex(ctx context.Context) error {
+	if err := useCase.searcher.Clear(ctx); err != nil {
+		return fmt.Errorf("clear index: %w", err)
+	}
+
 	lastMovie, err := findLastMovie(ctx, useCase.provider)
 	if err != nil {
 		return err

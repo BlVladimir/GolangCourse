@@ -8,7 +8,6 @@ import (
 
 type Repository interface {
 	GetMovie(ctx context.Context, id int) (domain.Movie, error)
-	// GetMoviesRange(ctx context.Context, from int, to int) ([]domain.Movie, error)
 	GetMoviesByIDs(ctx context.Context, ids []int) ([]domain.Movie, error)
 	LastMovie(ctx context.Context) (domain.Movie, error)
 	ExistIDs(ctx context.Context) (map[int]struct{}, error)
