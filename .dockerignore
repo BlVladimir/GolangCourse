@@ -1,0 +1,8 @@
+bin/
+.git/
+.github/
+.gitignore
+*_test.go
+README.md
+Dockerfile
+.dockerignore
