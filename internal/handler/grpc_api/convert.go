@@ -2,10 +2,10 @@ package grpc_api
 
 import (
 	moviepb "github.com/BlVladimir/GolangCourse/api/proto"
-	"github.com/BlVladimir/GolangCourse/internal/model"
+	"github.com/BlVladimir/GolangCourse/internal/domain"
 )
 
-func toProtoFilm(f model.Film) *moviepb.Movie {
+func toProtoFilm(f domain.Film) *moviepb.Movie {
 	return &moviepb.Movie{
 		Id:       int32(f.ID),
 		Title:    f.Title,
@@ -14,7 +14,7 @@ func toProtoFilm(f model.Film) *moviepb.Movie {
 	}
 }
 
-func toProtoResponse(movies []model.Film) *moviepb.LoadMoviesResponse {
+func toProtoResponse(movies []domain.Film) *moviepb.LoadMoviesResponse {
 	resp := &moviepb.LoadMoviesResponse{
 		Movies: make([]*moviepb.Movie, 0, len(movies)),
 	}

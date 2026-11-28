@@ -1,7 +1,7 @@
 package http_api
 
 import (
-	"github.com/BlVladimir/GolangCourse/internal/model"
+	"github.com/BlVladimir/GolangCourse/internal/domain"
 )
 
 type movieDTO struct {
@@ -15,11 +15,11 @@ type ErrorResponse struct {
 	Error string `json:"error"`
 }
 
-func oneToMoviesDTO(movie model.Film) movieDTO {
+func oneToMoviesDTO(movie domain.Film) movieDTO {
 	return movieDTO{ID: movie.ID, Title: movie.Title, Year: movie.Year, Director: movie.Director}
 }
 
-func manyToMoviesDTO(movies []model.Film) []movieDTO {
+func manyToMoviesDTO(movies []domain.Film) []movieDTO {
 	out := make([]movieDTO, len(movies))
 	for idx, movie := range movies {
 		out[idx] = oneToMoviesDTO(movie)

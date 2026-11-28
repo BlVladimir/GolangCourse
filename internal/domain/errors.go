@@ -1,4 +1,4 @@
-package film
+package domain
 
 import "errors"
 

@@ -20,7 +20,7 @@ func LoadUseCaseConfig() (UseCaseConfig, error) {
 
 	validateErr := configValidate(workersCount)
 	if validateErr != nil {
-		return UseCaseConfig{}, validateErr
+		return UseCaseConfig{}, err
 	}
 
 	return UseCaseConfig{WorkersCount: workersCount}, nil
