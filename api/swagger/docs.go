@@ -14,141 +14,7 @@ const docTemplate = `{
     },
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
-    "paths": {
-        "/last-movie": {
-            "get": {
-                "description": "Finds the film with the maximum id that exists on the stand.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "movies"
-                ],
-                "summary": "Get the last available movie",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/model.Film"
-                        }
-                    },
-                    "404": {
-                        "description": "No films on the stand",
-                        "schema": {
-                            "$ref": "#/definitions/http_api.ErrorResponse"
-                        }
-                    },
-                    "502": {
-                        "description": "Upstream unavailable",
-                        "schema": {
-                            "$ref": "#/definitions/http_api.ErrorResponse"
-                        }
-                    },
-                    "504": {
-                        "description": "Upstream timeout",
-                        "schema": {
-                            "$ref": "#/definitions/http_api.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/load-movies": {
-            "get": {
-                "description": "Downloads movies with ids in [from; to] from the stand.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "movies"
-                ],
-                "summary": "Load movies in a range",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "First movie id",
-                        "name": "from",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Last movie id",
-                        "name": "to",
-                        "in": "query",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/http_api.movieDTO"
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/http_api.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/http_api.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        }
-    },
-    "definitions": {
-        "http_api.ErrorResponse": {
-            "type": "object",
-            "properties": {
-                "error": {
-                    "type": "string"
-                }
-            }
-        },
-        "http_api.movieDTO": {
-            "type": "object",
-            "properties": {
-                "director": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "title": {
-                    "type": "string"
-                },
-                "year": {
-                    "type": "integer"
-                }
-            }
-        },
-        "model.Film": {
-            "type": "object",
-            "properties": {
-                "director": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "title": {
-                    "type": "string"
-                },
-                "year": {
-                    "type": "integer"
-                }
-            }
-        }
-    }
+    "paths": {}
 }`
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
@@ -158,7 +24,7 @@ var SwaggerInfo = &swag.Spec{
 	BasePath:         "/",
 	Schemes:          []string{},
 	Title:            "Movie API",
-	Description:      "Movie loader service backed by homeworksite.site.",
+	Description:      "Movie service backed by local PostgreSQL (synced from homeworksite.site at startup).",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",
